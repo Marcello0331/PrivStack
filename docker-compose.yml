@@ -8,15 +8,13 @@ services:
     ports:
       - "8082:3000"
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Budapest
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-changeme_32char_random_string}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://192.168.0.131:8082}
       - DATABASE_PATH=/data/privstack.db
       - NODE_ENV=production
     volumes:
-      - ./data:/data
+      - privstack_data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - privstack_net
