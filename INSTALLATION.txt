@@ -1,0 +1,299 @@
+PRIVSTACK INSTALLATION & DEPLOYMENT GUIDE
+==========================================
+
+The complete PrivStack application is located in this directory.
+All source files, configuration, and deployment setup are included.
+
+DIRECTORY STRUCTURE
+===================
+
+/tmp/privstack/                    # Complete PrivStack application
+
+Core Files:
+  package.json                     # Node.js dependencies
+  tsconfig.json                    # TypeScript configuration
+  next.config.ts                   # Next.js configuration
+  tailwind.config.ts               # Tailwind CSS configuration
+  middleware.ts                    # Auth middleware
+
+Docker:
+  Dockerfile                       # Multi-stage production build
+  docker-compose.yml               # Docker Compose configuration
+  .dockerignore                    # Docker build ignore rules
+  .env.example                     # Environment template
+  .env.local.example               # Local dev environment template
+
+Documentation:
+  README.md                        # Full project documentation
+  DEPLOYMENT.md                    # Deployment and troubleshooting guide
+  QUICK_START.sh                   # Automated deployment script
+
+Application Code:
+  app/                            # Next.js App Router
+    layout.tsx                    # Root layout with particle canvas
+    page.tsx                      # Main dashboard
+    login/                        # Login page
+    setup/                        # First-run setup wizard
+    settings/                     # Settings UI
+    api/                          # All API endpoints
+      auth/                       # NextAuth.js routes
+      setup/                      # Setup wizard API
+      apps/                       # App launcher API
+      layout/                     # Widget layout persistence
+      settings/                   # Settings storage
+      widgets/                    # Widget data endpoints
+        system-stats/
+        docker/
+        sonarr/
+        radarr/
+        qbittorrent/
+        jellyfin/
+        plex/
+        uptime-kuma/
+        weather/
+        esxi/
+        quick-stats/
+
+  components/
+    layout/                       # Header, navigation
+    apps/                         # App launcher components
+    dashboard/                    # Dashboard grid system
+    widgets/                      # 14 widget implementations
+      SystemStats.tsx
+      DockerContainers.tsx
+      Sonarr.tsx
+      Radarr.tsx
+      Qbittorrent.tsx
+      Jellyfin.tsx
+      Plex.tsx
+      UptimeKuma.tsx
+      Weather.tsx
+      Esxi.tsx
+      GrafanaEmbed.tsx
+      AppShortcuts.tsx
+      SearchWidget.tsx
+      QuickStats.tsx
+
+  lib/
+    db.ts                         # SQLite database setup
+    auth.ts                       # Authentication helpers
+    settings.ts                   # Settings management
+    widgetRegistry.ts             # Widget system registry
+    serviceClients/               # Service integration clients
+
+  public/
+    favicon.ico
+
+QUICK DEPLOYMENT (3 STEPS)
+==========================
+
+1. PREPARE SERVER
+
+   SSH into your Debian server:
+   $ ssh user@192.168.0.131
+
+   Create deployment directory:
+   $ sudo mkdir -p /opt/docker/privstack
+   $ sudo chown $USER:$USER /opt/docker/privstack
+
+2. COPY FILES
+
+   From your local machine, copy entire privstack folder:
+   $ rsync -av /tmp/privstack/ user@192.168.0.131:/opt/docker/privstack/
+
+   OR manually copy via SCP/SFTP
+
+3. DEPLOY
+
+   SSH into server and run:
+   $ cd /opt/docker/privstack
+   $ bash QUICK_START.sh
+
+   This will:
+   - Generate secure NEXTAUTH_SECRET
+   - Create .env file
+   - Build Docker image
+   - Start container
+   - Run health checks
+
+ACCESS DASHBOARD
+================
+
+Open in browser:
+  http://192.168.0.131:8082
+
+Complete the setup wizard:
+  1. Create admin account (username + password)
+  2. Select apps to add to launcher
+  3. Configure service URLs and API keys
+
+WHAT'S INCLUDED
+===============
+
+✅ Production-ready Next.js 14 application
+✅ SQLite database (no external DB needed)
+✅ NextAuth.js authentication with bcrypt
+✅ 14 pre-built widget types
+✅ Drag-and-drop dashboard grid
+✅ Pinned app launcher with selfh.st icons
+✅ Complete settings/configuration UI
+✅ Docker multi-stage build
+✅ Health checks and auto-restart
+✅ Comprehensive documentation
+
+ARCHITECTURE
+============
+
+Frontend:
+  - Next.js 14 (App Router)
+  - React 18
+  - TypeScript
+  - Tailwind CSS
+  - Recharts (data visualization)
+  - react-grid-layout (drag-drop)
+
+Backend:
+  - Next.js API routes
+  - NextAuth.js (credentials provider)
+  - SQLite via better-sqlite3
+
+Deployment:
+  - Docker (multi-stage build)
+  - Docker Compose orchestration
+  - Volume mounts (data + Docker socket)
+  - Health checks
+
+DATABASE SCHEMA
+===============
+
+users                           # Admin and viewer accounts
+  id, username, password_hash, role, created_at
+
+apps                            # Pinned application shortcuts
+  id, name, url, icon_url, category, sort_order, pinned
+
+widget_layouts                  # Per-user dashboard layouts
+  user_id, layout_data, updated_at
+
+settings                        # Key-value configuration store
+  key, value
+
+SERVICE INTEGRATIONS
+====================
+
+✅ Glances                      # System monitoring
+✅ Sonarr                       # TV show automation
+✅ Radarr                       # Movie automation
+✅ qBittorrent                  # Torrent client
+✅ Jellyfin                     # Media server
+✅ Plex                         # Media server
+✅ Uptime Kuma                  # Service monitoring
+✅ OpenWeatherMap               # Weather widget
+✅ ESXi/vSphere                 # Virtual machines (optional)
+✅ Grafana                      # Embedded dashboards (optional)
+✅ Docker API                   # Container monitoring
+✅ Custom apps                  # Any web service
+
+All integrations are configured via Settings UI.
+No hardcoded API keys or URLs.
+
+ENVIRONMENT VARIABLES
+=====================
+
+Required:
+  NEXTAUTH_SECRET               # Generated random string (32+ chars)
+  NEXTAUTH_URL                  # Dashboard URL (http://192.168.0.131:8082)
+  DATABASE_PATH                 # SQLite location (/data/privstack.db)
+
+Optional:
+  TZ                            # Timezone (Europe/Budapest)
+  NODE_ENV                      # production (default) or development
+
+Service URLs (can be set via UI instead):
+  GLANCES_URL
+  SONARR_URL
+  RADARR_URL
+  QBITTORRENT_URL
+  JELLYFIN_URL
+  PLEX_URL
+  UPTIME_KUMA_URL
+
+EXTENDING PRIVSTACK
+====================
+
+Adding a new widget is straightforward:
+
+1. Create component: components/widgets/MyWidget.tsx
+2. Create API route: app/api/widgets/my-widget/route.ts
+3. Add to registry: lib/widgetRegistry.ts
+4. Restart container
+
+See DEVELOPMENT.md for detailed examples.
+
+TROUBLESHOOTING
+===============
+
+Container won't start:
+  $ docker compose logs privstack
+
+  Common causes:
+  - DATABASE_PATH invalid
+  - NEXTAUTH_SECRET not set
+  - Port 8082 in use
+  - Docker socket not accessible
+
+Service shows "unreachable":
+  - Verify URL in Settings is correct
+  - Check service is accessible: curl http://service:port
+  - Verify API key is correct
+  - Check firewall rules
+
+High memory usage:
+  - Reduce widget polling intervals
+  - Clear old data from database
+  - Restart container
+
+For detailed troubleshooting: See DEPLOYMENT.md
+
+SECURITY NOTES
+==============
+
+✓ Passwords hashed with bcrypt
+✓ JWT-based sessions
+✓ Docker socket read-only
+✓ SQLite database
+
+⚠ Recommendations:
+  - Deploy behind HTTPS reverse proxy (nginx/Caddy)
+  - Use strong admin password
+  - Backup database regularly
+  - Keep Docker images updated
+
+SUPPORT & RESOURCES
+===================
+
+Documentation:
+  - README.md: Full project documentation
+  - DEPLOYMENT.md: Detailed deployment guide
+  - QUICK_START.sh: Automated setup
+
+Configuration:
+  - .env.example: Environment variables
+  - docker-compose.yml: Docker configuration
+  - Dockerfile: Build configuration
+
+Source Code:
+  All code is in the app/, components/, and lib/ directories
+  Well-structured and easy to extend
+
+NEXT STEPS
+==========
+
+1. Copy /tmp/privstack to /opt/docker/privstack on your server
+2. Run: cd /opt/docker/privstack && bash QUICK_START.sh
+3. Open http://192.168.0.131:8082
+4. Complete the setup wizard
+5. Configure your services in Settings
+6. Start adding widgets and customizing your dashboard!
+
+Enjoy your new homelab dashboard! 🎉

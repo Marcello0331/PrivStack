@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  privstack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: privstack
+    restart: unless-stopped
+    ports:
+      - "8082:3000"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Budapest
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-changeme_32char_random_string}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://192.168.0.131:8082}
+      - DATABASE_PATH=/data/privstack.db
+      - NODE_ENV=production
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - privstack_net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  privstack_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  privstack_data:
+    driver: local
