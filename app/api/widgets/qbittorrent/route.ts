@@ -27,7 +27,7 @@ export async function GET() {
 
       const active = Object.values(torrents).filter((t: any) => t.state === 'downloading').length;
       const speeds = Object.values(torrents).reduce(
-        (acc: any, t: any) => ({
+        (acc: { down: number; up: number }, t: any) => ({
           down: acc.down + (t.dl_speed || 0),
           up: acc.up + (t.up_speed || 0),
         }),
