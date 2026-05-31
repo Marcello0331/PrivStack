@@ -19,6 +19,25 @@ export default function SetupPage() {
   const [step, setStep] = useState<'admin' | 'apps' | 'complete'>('admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        const response = await fetch('/api/setup/check');
+        const data = await response.json();
+        if (data.complete) {
+          router.push('/login');
+        }
+      } catch (err) {
+        console.error('Setup check failed:', err);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkSetup();
+  }, [router]);
 
   // Step 1: Admin creation
   const [username, setUsername] = useState('admin');
@@ -126,6 +145,14 @@ export default function SetupPage() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-gray-400">Checking setup status...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
