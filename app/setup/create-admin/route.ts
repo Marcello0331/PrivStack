@@ -16,12 +16,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
     }
 
-    const passwordHash = await hashPassword(password);
-    createUser(username, passwordHash, 'admin');
-
-    return NextResponse.json({ success: true });
+    try {
+      const passwordHash = await hashPassword(password);
+      createUser(username, passwordHash, 'admin');
+      return NextResponse.json({ success: true });
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      return NextResponse.json({ error: 'Failed to create user: ' + String(dbError) }, { status: 500 });
+    }
   } catch (error) {
     console.error('Setup error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to parse request: ' + String(error) }, { status: 500 });
   }
 }

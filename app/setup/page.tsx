@@ -86,7 +86,9 @@ export default function SetupPage() {
 
       setStep('apps');
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error('Setup error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred. Please try again.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
