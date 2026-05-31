@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { isSetupComplete } from '@/lib/settings';
 import { getAllUsers } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const users = getAllUsers();
