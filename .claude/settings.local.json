@@ -6,7 +6,9 @@
       "Bash(git remote *)",
       "Bash(git branch *)",
       "Bash(git push *)",
-      "Bash(xargs -0 sed -i '' 's/from [\"].*auth.*config[\"'\"'\"']*$/from '\"'\"'../../auth/config'\"'\"';/g')"
+      "Bash(xargs -0 sed -i '' 's/from [\"].*auth.*config[\"'\"'\"']*$/from '\"'\"'../../auth/config'\"'\"';/g')",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix: Correct auth config import paths for all API routes *)"
     ]
   }
 }
