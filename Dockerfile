@@ -18,7 +18,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
-RUN mkdir -p /data && chmod 755 /data
+RUN mkdir -p /data && chmod 755 /data && chown node:node /data
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
