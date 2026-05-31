@@ -8,7 +8,7 @@ export default function AppShortcutsWidget({ config }: { config?: Record<string,
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchApps = async () => {
       try {
         const response = await fetch('/api/apps');
         const data = await response.json();
@@ -20,7 +20,7 @@ export default function AppShortcutsWidget({ config }: { config?: Record<string,
       }
     };
 
-    fetch();
+    fetchApps();
   }, []);
 
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
