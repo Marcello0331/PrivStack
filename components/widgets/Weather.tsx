@@ -8,7 +8,7 @@ export default function WeatherWidget({ config }: { config?: Record<string, any>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch('/api/widgets/weather');
         const result = await response.json();
@@ -20,8 +20,8 @@ export default function WeatherWidget({ config }: { config?: Record<string, any>
       }
     };
 
-    fetch();
-    const interval = setInterval(fetch, 600000);
+    fetchData();
+    const interval = setInterval(fetchData, 600000);
     return () => clearInterval(interval);
   }, []);
 

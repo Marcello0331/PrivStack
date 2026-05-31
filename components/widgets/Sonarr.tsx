@@ -7,7 +7,7 @@ export default function SonarrWidget({ config }: { config?: Record<string, any> 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch('/api/widgets/sonarr');
         const result = await response.json();
@@ -19,8 +19,8 @@ export default function SonarrWidget({ config }: { config?: Record<string, any> 
       }
     };
 
-    fetch();
-    const interval = setInterval(fetch, 60000);
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
 

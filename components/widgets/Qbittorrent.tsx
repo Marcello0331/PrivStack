@@ -7,7 +7,7 @@ export default function QbittorrentWidget({ config }: { config?: Record<string, 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch('/api/widgets/qbittorrent');
         const result = await response.json();
@@ -19,8 +19,8 @@ export default function QbittorrentWidget({ config }: { config?: Record<string, 
       }
     };
 
-    fetch();
-    const interval = setInterval(fetch, 30000);
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 

@@ -7,7 +7,7 @@ export default function QuickStatsWidget({ config }: { config?: Record<string, a
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch('/api/widgets/quick-stats');
         const data = await response.json();
@@ -19,8 +19,8 @@ export default function QuickStatsWidget({ config }: { config?: Record<string, a
       }
     };
 
-    fetch();
-    const interval = setInterval(fetch, 30000);
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
