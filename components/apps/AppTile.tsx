@@ -2,28 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import Image from 'next/image';
+import type { AppRecord } from './types';
 
-interface App {
-  id: number;
-  name: string;
-  url: string;
-  icon_url: string;
-  description: string;
-  open_in: string;
-}
-
-export default function AppTile({ app, editMode, onUpdate }: { app: App; editMode: boolean; onUpdate: () => void }) {
+export default function AppTile({ app, editMode, onUpdate }: { app: AppRecord; editMode: boolean; onUpdate: () => void }) {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
     checkStatus();
-  }, []);
+  }, [app.url]);
 
   const checkStatus = async () => {
     try {
       const response = await fetch(`/api/apps/ping?url=${encodeURIComponent(app.url)}`);
-      setIsOnline(response.ok);
+      const data = await response.json();
+      setIsOnline(Boolean(data.online));
     } catch {
       setIsOnline(false);
     }
@@ -32,10 +24,22 @@ export default function AppTile({ app, editMode, onUpdate }: { app: App; editMod
   const handleRemove = async () => {
     if (confirm(`Remove ${app.name} from launcher?`)) {
       try {
-        await fetch(`/api/apps/${app.id}`, { method: 'DELETE' });
+        await fetch(`/api/apps/${app.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: app.name,
+            url: app.url,
+            icon_url: app.icon_url || '',
+            description: app.description || '',
+            category: app.category || 'default',
+            open_in: app.open_in || 'tab',
+            pinned: false,
+          }),
+        });
         onUpdate();
       } catch (error) {
-        console.error('Failed to remove app:', error);
+        console.error('Failed to unpin app:', error);
       }
     }
   };
@@ -67,6 +71,9 @@ export default function AppTile({ app, editMode, onUpdate }: { app: App; editMod
           src={app.icon_url || 'https://cdn.jsdelivr.net/gh/selfhst/icons/png/question.png'}
           alt={app.name}
           className="w-12 h-12 rounded-lg object-cover"
+          onError={(e) => {
+            e.currentTarget.src = 'https://cdn.jsdelivr.net/gh/selfhst/icons/png/question.png';
+          }}
         />
         <div
           className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border border-white/30 ${

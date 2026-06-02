@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/config';
+import { appPayloadSchema } from '@/lib/appValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,8 +40,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name, url, icon_url, description, category, open_in, pinned } = body;
+    const body = appPayloadSchema.parse(await request.json());
+    const { name, url, icon_url = '', description = '', category = 'default', open_in, pinned } = body;
 
     const db = getDb();
     const stmt = db.prepare(
@@ -57,10 +58,13 @@ export async function POST(request: NextRequest) {
       description,
       category,
       open_in,
-      pinned,
+      pinned: pinned ? 1 : 0,
     });
   } catch (error) {
     console.error('Create app error:', error);
+    if (error && typeof error === 'object' && 'issues' in error) {
+      return NextResponse.json({ error: 'Invalid app data', details: (error as any).issues }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

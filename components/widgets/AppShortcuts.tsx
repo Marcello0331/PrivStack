@@ -10,7 +10,7 @@ export default function AppShortcutsWidget({ config }: { config?: Record<string,
   useEffect(() => {
     const fetchApps = async () => {
       try {
-        const response = await fetch('/api/apps');
+        const response = await fetch('/api/apps?pinned=1');
         const data = await response.json();
         setApps(data);
       } catch (error) {

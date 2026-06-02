@@ -3,26 +3,32 @@
 export const dynamic = 'force-dynamic';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
+import AppManager from '@/components/apps/AppManager';
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('services');
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'services');
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (!session) {
       router.push('/login');
       return;
     }
 
     fetchSettings();
-  }, [session, router]);
+  }, [session, status, router]);
 
   const fetchSettings = async () => {
     try {
@@ -73,7 +79,7 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <div className="flex gap-4 mb-8 border-b border-white/10">
-          {['services', 'users', 'appearance', 'about'].map((tab) => (
+          {['services', 'apps', 'users', 'appearance', 'about'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -182,6 +188,9 @@ export default function SettingsPage() {
             />
           </div>
         )}
+
+        {/* Apps Tab */}
+        {activeTab === 'apps' && <AppManager />}
 
         {/* Users Tab */}
         {activeTab === 'users' && (
