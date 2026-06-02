@@ -179,6 +179,7 @@ export default function DashboardGrid({
         width={1920}
         isDraggable={editMode}
         isResizable={editMode}
+        draggableCancel="button, input, textarea, select, option, a, .widget-action-menu"
         compactType="vertical"
         preventCollision={false}
         useCSSTransforms={true}

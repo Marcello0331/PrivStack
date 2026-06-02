@@ -31,9 +31,13 @@ export default function WidgetCard({
         <h3 className="font-semibold text-sm">{title.replace(/-/g, ' ').toUpperCase()}</h3>
 
         {editMode && (
-          <div className="relative">
+          <div className="relative widget-action-menu">
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
               className="p-1 rounded-lg hover:bg-white/10 transition-all"
             >
               <MoreVertical size={16} />
@@ -43,7 +47,9 @@ export default function WidgetCard({
               <div className="absolute right-0 mt-2 w-40 glass rounded-lg overflow-hidden shadow-2xl z-50">
                 {onRefresh && (
                   <button
-                    onClick={() => {
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       onRefresh();
                       setShowMenu(false);
                     }}
@@ -55,7 +61,9 @@ export default function WidgetCard({
                 )}
                 {onSettings && (
                   <button
-                    onClick={() => {
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       onSettings();
                       setShowMenu(false);
                     }}
@@ -66,7 +74,9 @@ export default function WidgetCard({
                   </button>
                 )}
                 <button
-                  onClick={() => {
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
                     onRemove(id);
                     setShowMenu(false);
                   }}
