@@ -1,19 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/config';
 import { getSetting } from '@/lib/settings';
+import { getServiceConnection } from '@/lib/serviceConnections';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sonarrUrl = getSetting('sonarr_url') || process.env.SONARR_URL;
-    const sonarrKey = getSetting('sonarr_api_key') || process.env.SONARR_API_KEY;
+    const connectionId = new URL(request.url).searchParams.get('connectionId');
+    const connection = connectionId ? getServiceConnection(Number(connectionId), 'sonarr') : undefined;
+    const sonarrUrl = connection?.url || getSetting('sonarr_url') || process.env.SONARR_URL;
+    const sonarrKey = connection?.api_key || getSetting('sonarr_api_key') || process.env.SONARR_API_KEY;
 
     if (!sonarrUrl || !sonarrKey) {
       return NextResponse.json({ error: 'not_configured' });

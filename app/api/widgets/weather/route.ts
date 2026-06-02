@@ -1,18 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/config';
 import { getSetting } from '@/lib/settings';
+import { getServiceConnection } from '@/lib/serviceConnections';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const apiKey = getSetting('openweathermap_api_key') || process.env.OPENWEATHERMAP_API_KEY;
+    const { searchParams } = new URL(request.url);
+    const connectionId = searchParams.get('connectionId');
+    const connection = connectionId ? getServiceConnection(Number(connectionId), 'weather') : undefined;
+    const apiKey = connection?.api_key || getSetting('openweathermap_api_key') || process.env.OPENWEATHERMAP_API_KEY;
+    const latitude = searchParams.get('lat') || '47.4979';
+    const longitude = searchParams.get('lon') || '19.0402';
 
     if (!apiKey) {
       return NextResponse.json({ error: 'not_configured' });
@@ -20,7 +26,7 @@ export async function GET() {
 
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=47.4979&lon=19.0402&units=metric&appid=${apiKey}`
+        `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&units=metric&appid=${apiKey}`
       );
       const data = await response.json();
 

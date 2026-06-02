@@ -75,6 +75,21 @@ function initializeSchema() {
     )
   `);
 
+  // Service connection profiles used by widget instances.
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS service_connections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      url TEXT NOT NULL,
+      api_key TEXT,
+      token TEXT,
+      extra_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Icon cache
   database.exec(`
     CREATE TABLE IF NOT EXISTS icon_cache (

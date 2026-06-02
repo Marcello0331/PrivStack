@@ -9,7 +9,9 @@ export default function RadarrWidget({ config }: { config?: Record<string, any> 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/widgets/radarr');
+        const params = new URLSearchParams();
+        if (config?.connectionId) params.set('connectionId', String(config.connectionId));
+        const response = await fetch(`/api/widgets/radarr?${params.toString()}`);
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -22,7 +24,7 @@ export default function RadarrWidget({ config }: { config?: Record<string, any> 
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [config?.connectionId]);
 
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
   if (data?.error) return <div className="text-red-400 text-sm">Configure Radarr in settings</div>;

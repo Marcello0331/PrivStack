@@ -10,7 +10,11 @@ export default function WeatherWidget({ config }: { config?: Record<string, any>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/widgets/weather');
+        const params = new URLSearchParams();
+        if (config?.connectionId) params.set('connectionId', String(config.connectionId));
+        if (config?.lat) params.set('lat', String(config.lat));
+        if (config?.lon) params.set('lon', String(config.lon));
+        const response = await fetch(`/api/widgets/weather?${params.toString()}`);
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -23,7 +27,7 @@ export default function WeatherWidget({ config }: { config?: Record<string, any>
     fetchData();
     const interval = setInterval(fetchData, 600000);
     return () => clearInterval(interval);
-  }, []);
+  }, [config?.connectionId, config?.lat, config?.lon]);
 
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
   if (data?.error) return <div className="text-red-400 text-sm">Weather unavailable</div>;

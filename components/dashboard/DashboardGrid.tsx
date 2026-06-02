@@ -50,11 +50,19 @@ const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   'quick-stats-bar': QuickStatsWidget,
 };
 
-export default function DashboardGrid() {
+export default function DashboardGrid({
+  editMode,
+  onExitEditMode,
+  showAddWidget,
+  onCloseAddWidget,
+}: {
+  editMode: boolean;
+  onExitEditMode: () => void;
+  showAddWidget: boolean;
+  onCloseAddWidget: () => void;
+}) {
   const { data: session } = useSession();
   const [layout, setLayout] = useState<GridItem[]>([]);
-  const [editMode, setEditMode] = useState(false);
-  const [showAddWidget, setShowAddWidget] = useState(false);
   const [editingWidget, setEditingWidget] = useState<GridItem | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -119,7 +127,7 @@ export default function DashboardGrid() {
       console.error('Failed to save layout:', error);
     }
 
-    setShowAddWidget(false);
+    onCloseAddWidget();
   };
 
   const handleUpdateWidgetConfig = async (_widgetId: string, config?: Record<string, any>) => {
@@ -177,13 +185,14 @@ export default function DashboardGrid() {
       >
         {layout.map((item) => {
           const Component = WIDGET_COMPONENTS[item.type];
+          const widget = getWidget(item.type);
           return (
             <div key={item.i} className="animate-in">
               <WidgetCard
                 id={item.i}
-                title={item.type}
+                title={item.config?.title || item.type}
                 onRemove={handleRemoveWidget}
-                onSettings={item.type === 'uptime-kuma' ? () => setEditingWidget(item) : undefined}
+                onSettings={widget?.configurable ? () => setEditingWidget(item) : undefined}
                 editMode={editMode}
               >
                 {Component ? <Component config={item.config} /> : <div>Widget not found</div>}
@@ -196,15 +205,9 @@ export default function DashboardGrid() {
       {editMode && (
         <div className="flex gap-3 mt-6 sticky bottom-6">
           <button
-            onClick={() => setShowAddWidget(true)}
-            className="btn btn-primary"
-          >
-            + Add Widget
-          </button>
-          <button
             onClick={() => {
               handleSaveLayout();
-              setEditMode(false);
+              onExitEditMode();
             }}
             className="btn btn-secondary"
           >
@@ -216,7 +219,7 @@ export default function DashboardGrid() {
       {showAddWidget && (
         <AddWidgetModal
           onAdd={handleAddWidget}
-          onClose={() => setShowAddWidget(false)}
+          onClose={onCloseAddWidget}
         />
       )}
 

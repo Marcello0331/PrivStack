@@ -35,6 +35,7 @@ interface KumaWidgetData {
 }
 
 interface KumaWidgetConfig {
+  connectionId?: number | string;
   url?: string;
   slug?: string;
   selectedMonitorIds?: string[];
@@ -109,6 +110,7 @@ export default function UptimeKumaWidget({ config }: { config?: KumaWidgetConfig
     if (isManual) setRefreshing(true);
 
     const params = new URLSearchParams();
+    if (config?.connectionId) params.set('connectionId', String(config.connectionId));
     if (config?.url) params.set('url', config.url);
     if (config?.slug) params.set('slug', config.slug);
     if (selectedIds?.length) params.set('monitors', selectedIds.join(','));
@@ -130,7 +132,7 @@ export default function UptimeKumaWidget({ config }: { config?: KumaWidgetConfig
     const interval = setInterval(() => fetchData(), 60000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config?.url, config?.slug, selectedIds?.join(',')]);
+  }, [config?.connectionId, config?.url, config?.slug, selectedIds?.join(',')]);
 
   const monitors = data?.monitors || [];
   const visibleMonitors = useMemo(() => (

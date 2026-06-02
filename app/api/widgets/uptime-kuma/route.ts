@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/config';
 import { getSetting } from '@/lib/settings';
+import { getServiceConnection } from '@/lib/serviceConnections';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const configuredUrl = searchParams.get('url')?.trim();
-    const uptimeUrl = configuredUrl || getSetting('uptime_kuma_url') || process.env.UPTIME_KUMA_URL;
+    const connectionId = searchParams.get('connectionId');
+    const connection = connectionId ? getServiceConnection(Number(connectionId), 'uptime-kuma') : undefined;
+    const uptimeUrl = connection?.url || configuredUrl || getSetting('uptime_kuma_url') || process.env.UPTIME_KUMA_URL;
     const slug = searchParams.get('slug')?.trim() || 'default';
     const selected = searchParams.get('monitors');
     const selectedMonitors = selected

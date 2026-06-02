@@ -8,7 +8,7 @@ import AppTile from './AppTile';
 import AppFormModal from './AppFormModal';
 import type { AppPayload, AppRecord } from './types';
 
-export default function AppLauncherBar() {
+export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number }) {
   const router = useRouter();
   const { data: session } = useSession();
   const [apps, setApps] = useState<AppRecord[]>([]);
@@ -21,7 +21,7 @@ export default function AppLauncherBar() {
 
   useEffect(() => {
     fetchApps();
-  }, []);
+  }, [refreshKey]);
 
   const isAdmin = (session?.user as any)?.role === 'admin';
 

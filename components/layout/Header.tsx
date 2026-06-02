@@ -3,15 +3,26 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, Settings, LogOut, Clock } from 'lucide-react';
+import { ChevronDown, Clock, Grid3x3, Plus, Search, Settings } from 'lucide-react';
 
-export default function Header() {
+export default function Header({
+  editMode,
+  onToggleEditMode,
+  onAddWidget,
+  onAddApp,
+}: {
+  editMode: boolean;
+  onToggleEditMode: () => void;
+  onAddWidget: () => void;
+  onAddApp: () => void;
+}) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [editMode, setEditMode] = useState(false);
   const [time, setTime] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const isAdmin = (session?.user as any)?.role === 'admin';
 
   useEffect(() => {
     const updateTime = () => {
@@ -28,6 +39,12 @@ export default function Header() {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!editMode) {
+      setShowActionsMenu(false);
+    }
+  }, [editMode]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,12 +91,57 @@ export default function Header() {
         {/* Right: Edit Toggle + Settings + User Menu */}
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setEditMode(!editMode)}
-            className="px-3 py-2 rounded-lg text-sm font-medium transition-all glass-hover"
+            onClick={() => {
+              setShowActionsMenu(false);
+              onToggleEditMode();
+            }}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all glass-hover ${
+              editMode ? 'ring-2 ring-accent-blue text-accent-blue' : ''
+            }`}
             title="Toggle edit mode"
           >
             ✎
           </button>
+
+          {editMode && (
+            <div className="relative">
+              <button
+                onClick={() => setShowActionsMenu(!showActionsMenu)}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all glass-hover flex items-center gap-2"
+                title="Add to dashboard"
+              >
+                <Plus size={16} />
+                <ChevronDown size={14} />
+              </button>
+
+              {showActionsMenu && (
+                <div className="absolute right-0 mt-2 w-44 glass rounded-lg overflow-hidden shadow-2xl">
+                  <button
+                    onClick={() => {
+                      onAddWidget();
+                      setShowActionsMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-white/5 text-sm transition-all flex items-center gap-2"
+                  >
+                    <Grid3x3 size={15} />
+                    Add Widget
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        onAddApp();
+                        setShowActionsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-white/5 text-sm transition-all flex items-center gap-2 border-t border-white/10"
+                    >
+                      <Plus size={15} />
+                      Add App
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             onClick={() => router.push('/settings')}

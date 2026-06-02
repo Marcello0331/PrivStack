@@ -9,7 +9,9 @@ export default function QbittorrentWidget({ config }: { config?: Record<string, 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/widgets/qbittorrent');
+        const params = new URLSearchParams();
+        if (config?.connectionId) params.set('connectionId', String(config.connectionId));
+        const response = await fetch(`/api/widgets/qbittorrent?${params.toString()}`);
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -22,7 +24,7 @@ export default function QbittorrentWidget({ config }: { config?: Record<string, 
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [config?.connectionId]);
 
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
   if (data?.error) return <div className="text-red-400 text-sm">Configure qBittorrent in settings</div>;
