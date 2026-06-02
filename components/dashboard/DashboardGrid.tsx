@@ -7,6 +7,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import WidgetCard from './WidgetCard';
 import AddWidgetModal from './AddWidgetModal';
+import { getWidget } from '@/lib/widgetRegistry';
 import SystemStatsWidget from '@/components/widgets/SystemStats';
 import DockerContainersWidget from '@/components/widgets/DockerContainers';
 import SonarrWidget from '@/components/widgets/Sonarr';
@@ -54,6 +55,7 @@ export default function DashboardGrid() {
   const [layout, setLayout] = useState<GridItem[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showAddWidget, setShowAddWidget] = useState(false);
+  const [editingWidget, setEditingWidget] = useState<GridItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -92,13 +94,14 @@ export default function DashboardGrid() {
   };
 
   const handleAddWidget = async (widgetId: string, config?: Record<string, any>) => {
+    const widget = getWidget(widgetId);
     const newId = `${widgetId}-${Date.now()}`;
     const newItem: GridItem = {
       i: newId,
       x: 0,
       y: layout.reduce((max, item) => Math.max(max, item.y + item.h), 0),
-      w: 4,
-      h: 4,
+      w: widget?.defaultSize.w || 4,
+      h: widget?.defaultSize.h || 4,
       type: widgetId,
       config,
     };
@@ -117,6 +120,27 @@ export default function DashboardGrid() {
     }
 
     setShowAddWidget(false);
+  };
+
+  const handleUpdateWidgetConfig = async (_widgetId: string, config?: Record<string, any>) => {
+    if (!editingWidget) return;
+
+    const newLayout = layout.map((item) => (
+      item.i === editingWidget.i ? { ...item, config } : item
+    ));
+    setLayout(newLayout);
+
+    try {
+      await fetch('/api/layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ layout: newLayout }),
+      });
+    } catch (error) {
+      console.error('Failed to save widget settings:', error);
+    }
+
+    setEditingWidget(null);
   };
 
   const handleRemoveWidget = (id: string) => {
@@ -159,6 +183,7 @@ export default function DashboardGrid() {
                 id={item.i}
                 title={item.type}
                 onRemove={handleRemoveWidget}
+                onSettings={item.type === 'uptime-kuma' ? () => setEditingWidget(item) : undefined}
                 editMode={editMode}
               >
                 {Component ? <Component config={item.config} /> : <div>Widget not found</div>}
@@ -192,6 +217,18 @@ export default function DashboardGrid() {
         <AddWidgetModal
           onAdd={handleAddWidget}
           onClose={() => setShowAddWidget(false)}
+        />
+      )}
+
+      {editingWidget && (
+        <AddWidgetModal
+          editingWidget={{
+            id: editingWidget.i,
+            type: editingWidget.type,
+            config: editingWidget.config,
+          }}
+          onAdd={handleUpdateWidgetConfig}
+          onClose={() => setEditingWidget(null)}
         />
       )}
     </div>
