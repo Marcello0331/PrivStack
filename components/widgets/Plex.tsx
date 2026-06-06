@@ -1,43 +1,230 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, RefreshCw, Search, Square, Wand2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+
+interface PlexSession {
+  sessionId: string;
+  title: string;
+  subtitle: string;
+  user: string;
+  player: string;
+  state: string;
+  type: string;
+  progress: number;
+}
+
+interface PlexLibrary {
+  key: string;
+  title: string;
+  type: string;
+  count: number;
+}
+
+interface PlexRecent {
+  ratingKey: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  addedAt: string | null;
+}
+
+interface PlexData {
+  error?: string;
+  message?: string;
+  activeStreams?: number;
+  libraryCount?: number;
+  recentlyAdded?: number;
+  sessions?: PlexSession[];
+  libraries?: PlexLibrary[];
+  recent?: PlexRecent[];
+}
+
+function errorText(data: PlexData | null) {
+  const messages: Record<string, string> = {
+    auth_failed: 'Plex token was rejected.',
+    not_configured: 'Configure Plex in settings or this widget.',
+    unreachable: 'Plex is unreachable from the server.',
+  };
+
+  return messages[data?.error || ''] || data?.message || 'Unable to load Plex.';
+}
 
 export default function PlexWidget({ config }: { config?: Record<string, any> }) {
-  const [data, setData] = useState<any>(null);
+  const { data: session } = useSession();
+  const [data, setData] = useState<PlexData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState('');
+  const [view, setView] = useState<'sessions' | 'libraries' | 'recent'>('sessions');
+  const [actionId, setActionId] = useState('');
+
+  const isAdmin = (session?.user as any)?.role === 'admin';
+
+  const fetchData = async (manual = false) => {
+    if (manual) setRefreshing(true);
+
+    try {
+      const params = new URLSearchParams();
+      if (config?.connectionId) params.set('connectionId', String(config.connectionId));
+      const response = await fetch(`/api/widgets/plex?${params.toString()}`);
+      const result = await response.json();
+      setData(result);
+    } catch {
+      setData({ error: 'unreachable' });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (config?.connectionId) params.set('connectionId', String(config.connectionId));
-        const response = await fetch(`/api/widgets/plex?${params.toString()}`);
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        console.error('Failed to fetch Plex data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-    const interval = setInterval(fetchData, 60000);
+    const interval = setInterval(() => fetchData(), 60000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config?.connectionId]);
 
+  const sessions = data?.sessions || [];
+  const libraries = data?.libraries || [];
+  const recent = data?.recent || [];
+  const visibleSessions = useMemo(() => (
+    sessions.filter((item) => `${item.title} ${item.subtitle} ${item.user} ${item.player}`.toLowerCase().includes(query.toLowerCase()))
+  ), [query, sessions]);
+  const visibleLibraries = useMemo(() => (
+    libraries.filter((item) => `${item.title} ${item.type}`.toLowerCase().includes(query.toLowerCase()))
+  ), [libraries, query]);
+  const visibleRecent = useMemo(() => (
+    recent.filter((item) => `${item.title} ${item.subtitle} ${item.type}`.toLowerCase().includes(query.toLowerCase()))
+  ), [query, recent]);
+
+  const runAction = async (action: 'refresh-library' | 'terminate-session', payload: Record<string, string>) => {
+    if (action === 'terminate-session' && !confirm('Stop this Plex stream?')) return;
+    if (action === 'refresh-library' && !confirm('Refresh this Plex library?')) return;
+
+    setActionId(`${action}:${payload.libraryKey || payload.sessionId}`);
+
+    try {
+      const response = await fetch('/api/widgets/plex/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload, connectionId: config?.connectionId }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setData((current) => ({ ...(current || {}), error: result.error || 'unreachable', message: result.message }));
+        return;
+      }
+
+      await fetchData();
+    } catch {
+      setData((current) => ({ ...(current || {}), error: 'unreachable' }));
+    } finally {
+      setActionId('');
+    }
+  };
+
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
-  if (data?.error) return <div className="text-red-400 text-sm">Configure Plex in settings</div>;
+  if (data?.error) return <div className="text-red-400 text-sm">{errorText(data)}</div>;
 
   return (
-    <div className="space-y-3">
-      <div className="glass-sm p-3 rounded-lg text-center">
-        <div className="text-2xl font-bold text-accent-blue">{data?.activeStreams || 0}</div>
-        <div className="text-xs text-gray-400">Now Playing</div>
+    <div className="space-y-3 text-sm">
+      <div className="grid grid-cols-3 gap-2">
+        <Stat label="Streams" value={data?.activeStreams || 0} />
+        <Stat label="Libraries" value={data?.libraryCount || 0} tone="text-accent-cyan" />
+        <Stat label="Recent" value={data?.recentlyAdded || 0} tone="text-green-400" />
       </div>
-      <div className="text-xs text-gray-400">
-        <p>Library status: {data?.status || 'Ready'}</p>
+
+      <div className="grid grid-cols-[1fr_108px_auto] gap-2">
+        <label className="relative">
+          <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search"
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-2 py-2 text-xs outline-none focus:border-accent-blue"
+          />
+        </label>
+        <select
+          value={view}
+          onChange={(event) => setView(event.target.value as 'sessions' | 'libraries' | 'recent')}
+          className="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-xs outline-none focus:border-accent-blue"
+        >
+          <option value="sessions">Streams</option>
+          <option value="libraries">Libraries</option>
+          <option value="recent">Recent</option>
+        </select>
+        <button onClick={() => fetchData(true)} disabled={refreshing} className="p-2 rounded-lg hover:bg-white/10 text-gray-300 disabled:opacity-50" title="Refresh">
+          <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+        </button>
+      </div>
+
+      <div className="max-h-72 overflow-y-auto space-y-2">
+        {view === 'sessions' && visibleSessions.map((item) => (
+          <div key={item.sessionId} className="glass-sm p-2 rounded-lg text-xs space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{item.title}</p>
+                <p className="text-gray-400 truncate">{[item.subtitle, item.user, item.state].filter(Boolean).join(' - ')}</p>
+              </div>
+              {isAdmin && item.sessionId && (
+                <IconButton title="Stop stream" loading={actionId === `terminate-session:${item.sessionId}`} onClick={() => runAction('terminate-session', { sessionId: item.sessionId })}>
+                  <Square size={13} />
+                </IconButton>
+              )}
+            </div>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-accent-blue" style={{ width: `${Math.min(Math.max(item.progress, 0), 100)}%` }} />
+            </div>
+          </div>
+        ))}
+
+        {view === 'libraries' && visibleLibraries.map((item) => (
+          <div key={item.key} className="glass-sm p-2 rounded-lg text-xs">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{item.title}</p>
+                <p className="text-gray-400 truncate">{[item.type, `${item.count} items`].filter(Boolean).join(' - ')}</p>
+              </div>
+              {isAdmin && (
+                <IconButton title="Refresh library" loading={actionId === `refresh-library:${item.key}`} onClick={() => runAction('refresh-library', { libraryKey: String(item.key) })}>
+                  <Wand2 size={13} />
+                </IconButton>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {view === 'recent' && visibleRecent.map((item) => (
+          <div key={item.ratingKey} className="glass-sm p-2 rounded-lg text-xs">
+            <p className="font-medium truncate">{item.title}</p>
+            <p className="text-gray-400 truncate">{[item.subtitle, item.type].filter(Boolean).join(' - ')}</p>
+          </div>
+        ))}
+
+        {((view === 'sessions' && !visibleSessions.length) || (view === 'libraries' && !visibleLibraries.length) || (view === 'recent' && !visibleRecent.length)) && (
+          <div className="glass-sm p-3 rounded-lg text-xs text-gray-400">No items found.</div>
+        )}
       </div>
     </div>
+  );
+}
+
+function Stat({ label, value, tone = 'text-accent-blue' }: { label: string; value: number; tone?: string }) {
+  return (
+    <div className="glass-sm p-2 rounded-lg text-center">
+      <div className={`text-lg font-bold ${tone}`}>{value}</div>
+      <div className="text-[11px] text-gray-400">{label}</div>
+    </div>
+  );
+}
+
+function IconButton({ children, loading, onClick, title }: { children: React.ReactNode; loading: boolean; onClick: () => void; title: string }) {
+  return (
+    <button onClick={onClick} disabled={loading} title={title} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-300 disabled:opacity-50">
+      {loading ? <Loader2 size={13} className="animate-spin" /> : children}
+    </button>
   );
 }
