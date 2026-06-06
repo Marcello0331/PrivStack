@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/config';
-import { getSetting } from '@/lib/settings';
-import { getServiceConnection } from '@/lib/serviceConnections';
+import {
+  normalizeQueueItem,
+  normalizeQueueResponse,
+  resolveServarrConfig,
+  servarrError,
+  servarrJson,
+} from '@/lib/serviceClients/servarr';
 
 export const dynamic = 'force-dynamic';
+
+function normalizeSeries(series: any) {
+  return {
+    id: series.id,
+    title: series.title || 'Unknown',
+    year: series.year,
+    monitored: Boolean(series.monitored),
+    seasonCount: Array.isArray(series.seasons) ? series.seasons.length : 0,
+    added: series.added || null,
+    path: series.path || '',
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,38 +31,36 @@ export async function GET(request: NextRequest) {
     }
 
     const connectionId = new URL(request.url).searchParams.get('connectionId');
-    const connection = connectionId ? getServiceConnection(Number(connectionId), 'sonarr') : undefined;
-    const sonarrUrl = connection?.url || getSetting('sonarr_url') || process.env.SONARR_URL;
-    const sonarrKey = connection?.api_key || getSetting('sonarr_api_key') || process.env.SONARR_API_KEY;
+    const config = resolveServarrConfig('sonarr', connectionId);
 
-    if (!sonarrUrl || !sonarrKey) {
+    if (!config) {
       return NextResponse.json({ error: 'not_configured' });
     }
 
     try {
-      const [seriesRes, queueRes] = await Promise.all([
-        fetch(`${sonarrUrl}/api/v3/series`, {
-          headers: { 'X-Api-Key': sonarrKey },
-        }),
-        fetch(`${sonarrUrl}/api/v3/queue`, {
-          headers: { 'X-Api-Key': sonarrKey },
-        }),
+      const [series, queueData, missingData] = await Promise.all([
+        servarrJson<any[]>(config, '/api/v3/series'),
+        servarrJson<any>(config, '/api/v3/queue?page=1&pageSize=12&sortKey=timeleft&sortDirection=ascending'),
+        servarrJson<any>(config, '/api/v3/wanted/missing?page=1&pageSize=1'),
       ]);
 
-      if (!seriesRes.ok || !queueRes.ok) {
-        return NextResponse.json({ error: 'auth_failed' });
-      }
-
-      const series = await seriesRes.json();
-      const queue = await queueRes.json();
+      const queue = normalizeQueueResponse(queueData);
+      const recent = [...series]
+        .sort((a, b) => new Date(b.added || 0).getTime() - new Date(a.added || 0).getTime())
+        .slice(0, 8)
+        .map(normalizeSeries);
 
       return NextResponse.json({
         seriesCount: series.length,
-        queueSize: queue.length,
-        lastAdded: series[0]?.title || 'N/A',
+        monitoredCount: series.filter((item: any) => item.monitored).length,
+        wantedCount: missingData?.totalRecords || 0,
+        queueSize: queue.totalRecords,
+        queue: queue.records.map(normalizeQueueItem),
+        recent,
+        lastAdded: recent[0]?.title || 'N/A',
       });
-    } catch {
-      return NextResponse.json({ error: 'unreachable' });
+    } catch (error) {
+      return NextResponse.json(servarrError(error), { status: 502 });
     }
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
