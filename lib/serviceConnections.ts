@@ -92,7 +92,7 @@ export function maskServiceConnection(connection: ServiceConnection) {
     url: connection.url,
     hasApiKey: Boolean(connection.api_key),
     hasToken: Boolean(connection.token),
-    extra_json: connection.extra_json,
+    hasExtraConfig: Boolean(connection.extra_json),
     created_at: connection.created_at,
     updated_at: connection.updated_at,
   };

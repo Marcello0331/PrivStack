@@ -21,6 +21,7 @@ interface ServiceConnection {
   url: string;
   hasApiKey?: boolean;
   hasToken?: boolean;
+  hasExtraConfig?: boolean;
 }
 
 interface KumaMonitorOption {
@@ -67,6 +68,8 @@ const DEFAULT_CONNECTION_FORM = {
   url: '',
   api_key: '',
   token: '',
+  username: '',
+  password: '',
 };
 
 function initialConfig(type?: string, config?: Record<string, any>) {
@@ -160,6 +163,12 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
           url: connectionForm.url,
           api_key: connectionForm.api_key,
           token: connectionForm.token,
+          extra_json: selectedWidget === 'qbittorrent'
+            ? JSON.stringify({
+                username: connectionForm.username,
+                password: connectionForm.password,
+              })
+            : '',
         }),
       });
       const data = await response.json();
@@ -364,6 +373,23 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
                           type="password"
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-blue"
                         />
+                      )}
+                      {selectedWidget === 'qbittorrent' && (
+                        <>
+                          <input
+                            value={connectionForm.username}
+                            onChange={(event) => setConnectionForm((current) => ({ ...current, username: event.target.value }))}
+                            placeholder="Username"
+                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-blue"
+                          />
+                          <input
+                            value={connectionForm.password}
+                            onChange={(event) => setConnectionForm((current) => ({ ...current, password: event.target.value }))}
+                            placeholder="Password"
+                            type="password"
+                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-blue"
+                          />
+                        </>
                       )}
                       <div className="md:col-span-2 flex items-center gap-3">
                         <button
