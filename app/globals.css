@@ -4,6 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --accent-color: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+  --dashboard-bg: #0a0a0f;
+  --dashboard-fg: #ffffff;
+  --dashboard-muted: #9ca3af;
+  --dashboard-bg-layer: radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 34%), radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.24), transparent 30%);
+  --glass-opacity: 0.05;
+  --glass-sm-opacity: 0.03;
+  --glass-blur: 12px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -15,10 +27,22 @@ html {
 }
 
 body {
-  background-color: #0a0a0f;
-  color: #ffffff;
+  background-color: var(--dashboard-bg);
+  color: var(--dashboard-fg);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: var(--dashboard-bg-layer);
+  background-size: cover;
+  background-position: center;
 }
 
 /* Scrollbar styling */
@@ -32,25 +56,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(var(--accent-rgb), 0.3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.5);
+  background: rgba(var(--accent-rgb), 0.5);
 }
 
 /* Glassmorphism base */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, var(--glass-opacity));
+  backdrop-filter: blur(var(--glass-blur));
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
 }
 
 .glass-sm {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, var(--glass-sm-opacity));
+  backdrop-filter: blur(calc(var(--glass-blur) * 0.67));
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
 }
@@ -61,13 +85,13 @@ body {
 }
 
 .glass-hover:hover {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 /* Text gradient */
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  background: linear-gradient(135deg, var(--accent-color), #06b6d4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -118,13 +142,13 @@ canvas#particle-canvas {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  background: linear-gradient(135deg, var(--accent-color), #06b6d4);
   color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.4);
   transform: translateY(-2px);
 }
 
@@ -136,4 +160,54 @@ canvas#particle-canvas {
 
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+.bg-bg-dark {
+  background-color: var(--dashboard-bg) !important;
+}
+
+.text-accent-blue {
+  color: var(--accent-color) !important;
+}
+
+.border-accent-blue {
+  border-color: var(--accent-color) !important;
+}
+
+.bg-accent-blue {
+  background-color: var(--accent-color) !important;
+}
+
+.focus\:ring-accent-blue:focus,
+.focus\:border-accent-blue:focus {
+  --tw-ring-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+[data-theme='light'] body {
+  color: #111827;
+}
+
+[data-theme='light'] .glass,
+[data-theme='light'] .glass-sm {
+  background: rgba(255, 255, 255, calc(var(--glass-opacity) + 0.42));
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #111827;
+}
+
+[data-theme='light'] .text-white,
+[data-theme='light'] .hover\:text-white:hover {
+  color: #111827 !important;
+}
+
+[data-theme='light'] .text-gray-300,
+[data-theme='light'] .text-gray-400,
+[data-theme='light'] .text-gray-500 {
+  color: #4b5563 !important;
+}
+
+[data-theme='light'] input,
+[data-theme='light'] textarea,
+[data-theme='light'] select {
+  color: #111827 !important;
 }

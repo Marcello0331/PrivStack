@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Upload } from 'lucide-react';
 import AppManager from '@/components/apps/AppManager';
 
 export default function SettingsPage() {
@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -50,6 +51,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
+      window.dispatchEvent(new Event('privstack:settings-saved'));
       alert('Settings saved successfully');
     } catch (error) {
       alert('Failed to save settings');
@@ -202,17 +204,149 @@ export default function SettingsPage() {
         {/* Appearance Tab */}
         {activeTab === 'appearance' && (
           <div className="space-y-6">
-            <ServiceInput
-              label="Accent Color"
-              value={settings['accent_color'] || '#3b82f6'}
-              onChange={(val) => setSettings({ ...settings, accent_color: val })}
-              type="color"
-            />
-            <ServiceInput
-              label="Search Engine"
-              value={settings['search_engine'] || 'google'}
-              onChange={(val) => setSettings({ ...settings, search_engine: val })}
-            />
+            <div className="glass-sm p-4 rounded-lg space-y-4">
+              <h2 className="font-semibold">Theme</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <SelectInput
+                  label="Mode"
+                  value={settings['theme_mode'] || 'dark'}
+                  onChange={(val) => setSettings({ ...settings, theme_mode: val })}
+                  options={[
+                    ['dark', 'Night'],
+                    ['light', 'Day'],
+                  ]}
+                />
+                <ServiceInput
+                  label="Accent Color"
+                  value={settings['accent_color'] || '#3b82f6'}
+                  onChange={(val) => setSettings({ ...settings, accent_color: val })}
+                  type="color"
+                />
+              </div>
+            </div>
+
+            <div className="glass-sm p-4 rounded-lg space-y-4">
+              <h2 className="font-semibold">Background</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <SelectInput
+                  label="Background Type"
+                  value={settings['background_type'] || 'preset'}
+                  onChange={(val) => setSettings({ ...settings, background_type: val })}
+                  options={[
+                    ['preset', 'Built-in preset'],
+                    ['custom', 'Custom CSS background'],
+                    ['image', 'Uploaded image'],
+                  ]}
+                />
+                {(settings['background_type'] || 'preset') === 'preset' && (
+                  <SelectInput
+                    label="Preset"
+                    value={settings['background_value'] || 'aurora'}
+                    onChange={(val) => setSettings({ ...settings, background_value: val })}
+                    options={[
+                      ['aurora', 'Aurora'],
+                      ['ember', 'Ember'],
+                      ['forest', 'Forest'],
+                      ['mono', 'Mono'],
+                      ['none', 'None'],
+                    ]}
+                  />
+                )}
+                {settings['background_type'] === 'custom' && (
+                  <ServiceInput
+                    label="Custom CSS Background"
+                    value={settings['background_value'] || ''}
+                    onChange={(val) => setSettings({ ...settings, background_value: val })}
+                    placeholder="linear-gradient(135deg, #0f172a, #111827)"
+                  />
+                )}
+              </div>
+
+              <label className="block">
+                <span className="block text-sm font-medium mb-2">Upload Background Image</span>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+
+                      setUploadingBackground(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        const response = await fetch('/api/settings/background', {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        const data = await response.json();
+
+                        if (!response.ok || !data.url) {
+                          throw new Error(data.error || 'Upload failed');
+                        }
+
+                        setSettings((current) => ({
+                          ...current,
+                          background_type: 'image',
+                          background_value: data.url,
+                        }));
+                        window.dispatchEvent(new Event('privstack:settings-saved'));
+                      } catch (error) {
+                        alert(error instanceof Error ? error.message : 'Upload failed');
+                      } finally {
+                        setUploadingBackground(false);
+                        event.target.value = '';
+                      }
+                    }}
+                    className="flex-1 glass-sm px-4 py-2 text-sm"
+                  />
+                  <div className="btn btn-secondary flex items-center gap-2 justify-center pointer-events-none">
+                    {uploadingBackground ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {uploadingBackground ? 'Uploading...' : 'PNG, JPG, WebP or GIF'}
+                  </div>
+                </div>
+                {settings['background_type'] === 'image' && settings['background_value'] && (
+                  <p className="text-xs text-gray-400 mt-2 truncate">Current image: {settings['background_value']}</p>
+                )}
+              </label>
+            </div>
+
+            <div className="glass-sm p-4 rounded-lg space-y-4">
+              <h2 className="font-semibold">Surface Effects</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <RangeInput
+                  label="Glass Opacity"
+                  value={settings['glass_opacity'] || '0.05'}
+                  min="0"
+                  max="0.4"
+                  step="0.01"
+                  onChange={(val) => setSettings({ ...settings, glass_opacity: val })}
+                />
+                <RangeInput
+                  label="Glass Blur"
+                  value={settings['glass_blur'] || '12'}
+                  min="0"
+                  max="30"
+                  step="1"
+                  onChange={(val) => setSettings({ ...settings, glass_blur: val })}
+                />
+                <SelectInput
+                  label="Particles"
+                  value={settings['particles_enabled'] || 'true'}
+                  onChange={(val) => setSettings({ ...settings, particles_enabled: val })}
+                  options={[
+                    ['true', 'Enabled'],
+                    ['false', 'Disabled'],
+                  ]}
+                />
+                <ServiceInput
+                  label="Search Engine"
+                  value={settings['search_engine'] || 'google'}
+                  onChange={(val) => setSettings({ ...settings, search_engine: val })}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -231,7 +365,7 @@ export default function SettingsPage() {
         )}
 
         {/* Save Button */}
-        {activeTab === 'services' && (
+        {(activeTab === 'services' || activeTab === 'appearance') && (
           <div className="mt-8 flex gap-3">
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 btn btn-primary">
               <Save size={18} />
@@ -266,6 +400,67 @@ function ServiceInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full glass-sm px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-blue rounded-lg"
+      />
+    </div>
+  );
+}
+
+function SelectInput({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: Array<[string, string]>;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full glass-sm px-4 py-2 text-white bg-bg-dark focus:outline-none focus:ring-2 focus:ring-accent-blue rounded-lg"
+      >
+        {options.map(([optionValue, labelText]) => (
+          <option key={optionValue} value={optionValue}>{labelText}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function RangeInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  min: string;
+  max: string;
+  step: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium">{label}</label>
+        <span className="text-xs text-gray-400">{value}</span>
+      </div>
+      <input
+        type="range"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full accent-[var(--accent-color)]"
       />
     </div>
   );
