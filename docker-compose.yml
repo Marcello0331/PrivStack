@@ -12,10 +12,13 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-changeme_32char_random_string}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://192.168.0.131:8082}
       - DATABASE_PATH=/data/privstack.db
+      - DOCKER_SOCKET_PATH=/var/run/docker.sock
       - NODE_ENV=production
+    group_add:
+      - "${DOCKER_GID:-0}"
     volumes:
       - privstack_data:/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - privstack_net
     healthcheck:

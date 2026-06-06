@@ -102,6 +102,21 @@ Edit `docker-compose.yml` and add service-specific environment variables, then:
 docker compose restart
 ```
 
+### Docker Socket Widget
+
+The Docker Containers widget reads the local Docker socket to list containers,
+show uptime and logs, and run start, stop, and restart actions. The provided
+Compose file mounts `/var/run/docker.sock` and sets
+`DOCKER_SOCKET_PATH=/var/run/docker.sock`.
+
+On Linux, if the widget reports a Docker socket permission error, set the host
+Docker group ID before starting the stack:
+
+```bash
+export DOCKER_GID=$(getent group docker | cut -d: -f3)
+docker compose up -d
+```
+
 ## Integrating with Portainer
 
 PrivStack can be managed via Portainer:
