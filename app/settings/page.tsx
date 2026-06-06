@@ -144,6 +144,21 @@ export default function SettingsPage() {
               placeholder="http://192.168.0.131:8080"
             />
             <ServiceInput
+              label="Prowlarr URL"
+              key="prowlarr_url"
+              value={settings['prowlarr_url'] || ''}
+              onChange={(val) => setSettings({ ...settings, prowlarr_url: val })}
+              placeholder="http://192.168.0.131:9696"
+            />
+            <ServiceInput
+              label="Prowlarr API Key"
+              key="prowlarr_api_key"
+              value={settings['prowlarr_api_key'] || ''}
+              onChange={(val) => setSettings({ ...settings, prowlarr_api_key: val })}
+              placeholder="Your Prowlarr API key"
+              type="password"
+            />
+            <ServiceInput
               label="Jellyfin URL"
               key="jellyfin_url"
               value={settings['jellyfin_url'] || ''}

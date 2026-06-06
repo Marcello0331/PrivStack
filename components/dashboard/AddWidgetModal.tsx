@@ -36,6 +36,7 @@ type KumaDisplayOption = 'showSummary' | 'showMonitorList' | 'showHeartbeat' | '
 const CONNECTION_WIDGETS = new Set([
   'sonarr',
   'radarr',
+  'prowlarr',
   'qbittorrent',
   'jellyfin',
   'plex',
@@ -44,7 +45,7 @@ const CONNECTION_WIDGETS = new Set([
   'esxi',
 ]);
 
-const API_KEY_WIDGETS = new Set(['sonarr', 'radarr', 'jellyfin', 'weather']);
+const API_KEY_WIDGETS = new Set(['sonarr', 'radarr', 'prowlarr', 'jellyfin', 'weather']);
 const TOKEN_WIDGETS = new Set(['plex']);
 
 const KUMA_DISPLAY_OPTIONS: Array<{ key: KumaDisplayOption; label: string }> = [

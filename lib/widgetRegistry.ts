@@ -51,6 +51,14 @@ const widgets: WidgetConfig[] = [
     configurable: true,
   },
   {
+    id: 'prowlarr',
+    name: 'Prowlarr',
+    description: 'Indexer and app sync status',
+    icon: Search,
+    defaultSize: { w: 4, h: 4 },
+    configurable: true,
+  },
+  {
     id: 'jellyfin',
     name: 'Jellyfin',
     description: 'Media server dashboard',

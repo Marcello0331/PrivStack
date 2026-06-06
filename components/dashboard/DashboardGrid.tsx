@@ -13,6 +13,7 @@ import DockerContainersWidget from '@/components/widgets/DockerContainers';
 import SonarrWidget from '@/components/widgets/Sonarr';
 import RadarrWidget from '@/components/widgets/Radarr';
 import QbittorrentWidget from '@/components/widgets/Qbittorrent';
+import ProwlarrWidget from '@/components/widgets/Prowlarr';
 import JellyfinWidget from '@/components/widgets/Jellyfin';
 import PlexWidget from '@/components/widgets/Plex';
 import UptimeKumaWidget from '@/components/widgets/UptimeKuma';
@@ -39,6 +40,7 @@ const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   sonarr: SonarrWidget,
   radarr: RadarrWidget,
   qbittorrent: QbittorrentWidget,
+  prowlarr: ProwlarrWidget,
   jellyfin: JellyfinWidget,
   plex: PlexWidget,
   'uptime-kuma': UptimeKumaWidget,
