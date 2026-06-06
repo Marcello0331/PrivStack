@@ -9,7 +9,7 @@ import { setSetting } from '@/lib/settings';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const ALLOWED_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json({ error: 'file_too_large' }, { status: 400 });
+      return NextResponse.json({ error: 'file_too_large', maxBytes: MAX_UPLOAD_BYTES }, { status: 400 });
     }
 
     const bytes = Buffer.from(await file.arrayBuffer());

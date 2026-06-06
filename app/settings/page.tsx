@@ -298,6 +298,10 @@ export default function SettingsPage() {
                         const data = await response.json();
 
                         if (!response.ok || !data.url) {
+                          if (data.error === 'file_too_large') {
+                            throw new Error('Background image is too large. Maximum size is 25 MB.');
+                          }
+
                           throw new Error(data.error || 'Upload failed');
                         }
 
@@ -318,7 +322,7 @@ export default function SettingsPage() {
                   />
                   <div className="btn btn-secondary flex items-center gap-2 justify-center pointer-events-none">
                     {uploadingBackground ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                    {uploadingBackground ? 'Uploading...' : 'PNG, JPG, WebP or GIF'}
+                    {uploadingBackground ? 'Uploading...' : 'PNG, JPG, WebP or GIF up to 25 MB'}
                   </div>
                 </div>
                 {settings['background_type'] === 'image' && settings['background_value'] && (
