@@ -27,7 +27,7 @@ function getInitialPayload(app?: AppRecord | null): AppPayload {
     icon_url: app?.icon_url || '',
     description: app?.description || '',
     category: app?.category || 'default',
-    open_in: app?.open_in || 'tab',
+    open_in: app?.open_in || 'newwindow',
     pinned: app ? Boolean(app.pinned) : true,
   };
 }
@@ -174,7 +174,7 @@ export default function AppFormModal({
                 className="w-full glass-sm px-4 py-2 text-white bg-bg-dark focus:outline-none focus:ring-2 focus:ring-accent-blue rounded-lg"
                 disabled={saving}
               >
-                <option value="tab">Same tab</option>
+                <option value="tab">Current tab</option>
                 <option value="newwindow">New tab</option>
               </select>
             </Field>

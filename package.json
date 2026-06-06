@@ -10,30 +10,30 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "next": "^14.1.0",
-    "next-auth": "^4.24.0",
+    "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^9.2.0",
+    "clsx": "^2.1.0",
     "dockerode": "^4.0.0",
     "lucide-react": "^0.376.0",
+    "next": "^14.1.0",
+    "next-auth": "^4.24.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-grid-layout": "^1.4.4",
     "recharts": "^2.10.0",
-    "axios": "^1.6.2",
-    "zod": "^3.22.4",
-    "clsx": "^2.1.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "typescript": "^5.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/dockerode": "^3.3.23",
+    "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/node": "^20.10.0",
-    "@types/better-sqlite3": "^7.6.8",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/dockerode": "^3.3.23",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.9.3"
   }
 }
