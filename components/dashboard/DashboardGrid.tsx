@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import GridLayout from 'react-grid-layout';
+import GridLayout, { WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import WidgetCard from './WidgetCard';
@@ -32,6 +32,49 @@ interface GridItem {
   h: number;
   type: string;
   config?: Record<string, any>;
+  minW?: number;
+  minH?: number;
+  maxH?: number;
+}
+
+const ResponsiveGridLayout = WidthProvider(GridLayout);
+
+const LAYOUT_RULES: Record<string, Partial<GridItem> & { minW: number; minH: number; maxH?: number }> = {
+  'system-stats': { minW: 3, minH: 2, w: 4, h: 3 },
+  'docker-containers': { minW: 4, minH: 3, w: 5, h: 4 },
+  sonarr: { minW: 3, minH: 2, w: 4, h: 3 },
+  radarr: { minW: 3, minH: 2, w: 4, h: 3 },
+  qbittorrent: { minW: 3, minH: 2, w: 4, h: 3 },
+  prowlarr: { minW: 3, minH: 2, w: 4, h: 3 },
+  jellyfin: { minW: 3, minH: 2, w: 4, h: 3 },
+  plex: { minW: 3, minH: 2, w: 4, h: 3 },
+  'quick-stats-bar': { minW: 3, minH: 1, maxH: 2, w: 6, h: 1 },
+  'search-widget': { minW: 3, minH: 1, maxH: 2, w: 5, h: 2 },
+  'uptime-kuma': { minW: 3, minH: 2, w: 4, h: 3 },
+  weather: { minW: 3, minH: 2, w: 4, h: 3 },
+  esxi: { minW: 3, minH: 2, w: 4, h: 3 },
+  'app-shortcuts': { minW: 3, minH: 2, w: 5, h: 3 },
+  'grafana-embed': { minW: 4, minH: 3, w: 6, h: 4 },
+};
+
+function normalizeLayoutItem(item: GridItem): GridItem {
+  const rules = LAYOUT_RULES[item.type];
+  if (!rules) {
+    return {
+      ...item,
+      minW: item.minW || 3,
+      minH: item.minH || 2,
+    };
+  }
+
+  return {
+    ...item,
+    w: Math.max(rules.minW, Math.min(item.w || rules.w || 4, item.type === 'quick-stats-bar' ? 6 : 12)),
+    h: Math.max(rules.minH, Math.min(item.h || rules.h || 3, rules.maxH || 12)),
+    minW: rules.minW,
+    minH: rules.minH,
+    maxH: rules.maxH,
+  };
 }
 
 const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
@@ -76,7 +119,7 @@ export default function DashboardGrid({
     try {
       const response = await fetch('/api/layout');
       const data = await response.json();
-      setLayout(data.layout || []);
+      setLayout((data.layout || []).map(normalizeLayoutItem));
     } catch {
       setLayout([]);
     } finally {
@@ -85,7 +128,7 @@ export default function DashboardGrid({
   };
 
   const handleLayoutChange = (newLayout: any[]) => {
-    setLayout(newLayout.map((item) => ({
+    setLayout(newLayout.map((item) => normalizeLayoutItem({
       ...layout.find((l) => l.i === item.i) || { type: 'unknown', config: {} },
       ...item,
     })));
@@ -106,7 +149,7 @@ export default function DashboardGrid({
   const handleAddWidget = async (widgetId: string, config?: Record<string, any>) => {
     const widget = getWidget(widgetId);
     const newId = `${widgetId}-${Date.now()}`;
-    const newItem: GridItem = {
+    const newItem: GridItem = normalizeLayoutItem({
       i: newId,
       x: 0,
       y: layout.reduce((max, item) => Math.max(max, item.y + item.h), 0),
@@ -114,7 +157,7 @@ export default function DashboardGrid({
       h: widget?.defaultSize.h || 4,
       type: widgetId,
       config,
-    };
+    });
 
     const newLayout = [...layout, newItem];
     setLayout(newLayout);
@@ -170,15 +213,16 @@ export default function DashboardGrid({
 
   if (loading) return null;
 
+  const normalizedLayout = layout.map(normalizeLayoutItem);
+
   return (
-    <div className="px-6 pb-6">
-      <GridLayout
+    <div className="px-4 md:px-6 pb-6">
+      <ResponsiveGridLayout
         className="layout"
-        layout={layout}
+        layout={normalizedLayout}
         onLayoutChange={handleLayoutChange}
         cols={12}
-        rowHeight={60}
-        width={1920}
+        rowHeight={52}
         isDraggable={editMode}
         isResizable={editMode}
         draggableCancel="button, input, textarea, select, option, a, .widget-action-menu"
@@ -203,7 +247,7 @@ export default function DashboardGrid({
             </div>
           );
         })}
-      </GridLayout>
+      </ResponsiveGridLayout>
 
       {editMode && (
         <div className="flex gap-3 mt-6 sticky bottom-6">

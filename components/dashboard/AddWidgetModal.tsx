@@ -48,6 +48,18 @@ const CONNECTION_WIDGETS = new Set([
 const API_KEY_WIDGETS = new Set(['sonarr', 'radarr', 'prowlarr', 'jellyfin', 'weather']);
 const TOKEN_WIDGETS = new Set(['plex']);
 
+const SERVICE_SETTING_KEYS: Record<string, { url?: string; apiKey?: string; token?: string }> = {
+  sonarr: { url: 'sonarr_url', apiKey: 'sonarr_api_key' },
+  radarr: { url: 'radarr_url', apiKey: 'radarr_api_key' },
+  prowlarr: { url: 'prowlarr_url', apiKey: 'prowlarr_api_key' },
+  qbittorrent: { url: 'qbittorrent_url' },
+  jellyfin: { url: 'jellyfin_url', apiKey: 'jellyfin_api_key' },
+  plex: { url: 'plex_url', token: 'plex_token' },
+  'uptime-kuma': { url: 'uptime_kuma_url' },
+  weather: { apiKey: 'openweathermap_api_key' },
+  esxi: { url: 'esxi_url' },
+};
+
 const KUMA_DISPLAY_OPTIONS: Array<{ key: KumaDisplayOption; label: string }> = [
   { key: 'showSummary', label: 'Summary' },
   { key: 'showMonitorList', label: 'Monitor list' },
@@ -98,6 +110,7 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
   const [selectedWidget, setSelectedWidget] = useState<string | null>(editingWidget?.type || null);
   const [config, setConfig] = useState<Record<string, any>>(initialConfig(editingWidget?.type, editingWidget?.config));
   const [connections, setConnections] = useState<ServiceConnection[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<Record<string, string>>({});
   const [connectionForm, setConnectionForm] = useState(DEFAULT_CONNECTION_FORM);
   const [showConnectionForm, setShowConnectionForm] = useState(false);
   const [savingConnection, setSavingConnection] = useState(false);
@@ -116,6 +129,26 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
     connections.find((connection) => String(connection.id) === String(config.connectionId))
   ), [config.connectionId, connections]);
 
+  const globalConnectionStatus = useMemo(() => {
+    if (!selectedWidget || !needsConnection || selectedConnection) return null;
+
+    const keys = SERVICE_SETTING_KEYS[selectedWidget] || {};
+    const url = keys.url ? globalSettings[keys.url] : selectedWidget === 'weather' ? 'OpenWeatherMap' : '';
+    const missing = [
+      keys.url && !globalSettings[keys.url] ? 'URL' : '',
+      keys.apiKey && !globalSettings[keys.apiKey] ? 'API key' : '',
+      keys.token && !globalSettings[keys.token] ? 'token' : '',
+    ].filter(Boolean);
+
+    return {
+      url,
+      missing,
+      ready: missing.length === 0,
+    };
+  }, [globalSettings, needsConnection, selectedConnection, selectedWidget]);
+
+  const openLinkPlaceholder = selectedConnection?.url || globalConnectionStatus?.url || 'https://service.example.com';
+
   useEffect(() => {
     setConfig(initialConfig(selectedWidget || undefined, editingWidget?.type === selectedWidget ? editingWidget.config : undefined));
     setKumaMonitors([]);
@@ -123,6 +156,20 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
     setShowConnectionForm(false);
     setConnectionForm(DEFAULT_CONNECTION_FORM);
   }, [editingWidget?.config, editingWidget?.type, selectedWidget]);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        const data = await response.json();
+        setGlobalSettings(data || {});
+      } catch {
+        setGlobalSettings({});
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     if (!selectedWidget || !needsConnection) {
@@ -307,7 +354,7 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
                   <input
                     value={config.openLink || ''}
                     onChange={(event) => setConfig((current) => ({ ...current, openLink: event.target.value }))}
-                    placeholder={selectedConnection?.url || 'https://service.example.com'}
+                    placeholder={openLinkPlaceholder}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-blue"
                   />
                 </label>
@@ -342,6 +389,23 @@ export default function AddWidgetModal({ onAdd, onClose, editingWidget }: AddWid
                       </option>
                     ))}
                   </select>
+
+                  {globalConnectionStatus && (
+                    <div className={`rounded-lg border px-3 py-2 text-xs ${
+                      globalConnectionStatus.ready
+                        ? 'border-green-500/20 bg-green-500/10 text-green-200'
+                        : 'border-yellow-500/20 bg-yellow-500/10 text-yellow-100'
+                    }`}>
+                      {globalConnectionStatus.ready ? (
+                        <span>Using global settings{globalConnectionStatus.url ? `: ${globalConnectionStatus.url}` : ''}</span>
+                      ) : (
+                        <span>
+                          Global settings are missing {globalConnectionStatus.missing.join(', ')}.
+                          Add a connection here or fill the Settings page once.
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {showConnectionForm && (
                     <div className="grid md:grid-cols-2 gap-3 border-t border-white/10 pt-4">

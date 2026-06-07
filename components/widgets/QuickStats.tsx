@@ -26,13 +26,22 @@ export default function QuickStatsWidget({ config }: { config?: Record<string, a
 
   if (loading || !stats) return null;
 
+  const items = [
+    ['Uptime', stats?.uptime || 'N/A'],
+    ['Containers', stats?.containers || 0],
+    ['Torrents', stats?.torrents || 0],
+    ['Sonarr', stats?.sonarrQueue || 0],
+    ['Radarr', stats?.radarrQueue || 0],
+  ];
+
   return (
-    <div className="flex items-center justify-between gap-4 text-xs">
-      <div className="glass-sm px-3 py-1 rounded-full">Uptime: {stats?.uptime || 'N/A'}</div>
-      <div className="glass-sm px-3 py-1 rounded-full">Containers: {stats?.containers || 0}</div>
-      <div className="glass-sm px-3 py-1 rounded-full">Torrents: {stats?.torrents || 0}</div>
-      <div className="glass-sm px-3 py-1 rounded-full">Sonarr: {stats?.sonarrQueue || 0}</div>
-      <div className="glass-sm px-3 py-1 rounded-full">Radarr: {stats?.radarrQueue || 0}</div>
+    <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-none">
+      {items.map(([label, value]) => (
+        <div key={label} className="glass-sm px-2 py-1 rounded-md whitespace-nowrap">
+          <span className="text-gray-400">{label}</span>
+          <span className="ml-1 text-white">{value}</span>
+        </div>
+      ))}
     </div>
   );
 }

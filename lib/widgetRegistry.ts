@@ -15,7 +15,7 @@ const widgets: WidgetConfig[] = [
     name: 'System Stats',
     description: 'CPU, RAM, disk usage from Glances',
     icon: Gauge,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: false,
   },
   {
@@ -23,7 +23,7 @@ const widgets: WidgetConfig[] = [
     name: 'Docker Containers',
     description: 'Running Docker containers',
     icon: HardDrive,
-    defaultSize: { w: 6, h: 4 },
+    defaultSize: { w: 5, h: 4 },
     configurable: false,
   },
   {
@@ -31,7 +31,7 @@ const widgets: WidgetConfig[] = [
     name: 'Sonarr',
     description: 'TV show downloads',
     icon: Download,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -39,7 +39,7 @@ const widgets: WidgetConfig[] = [
     name: 'Radarr',
     description: 'Movie downloads',
     icon: Play,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -47,7 +47,7 @@ const widgets: WidgetConfig[] = [
     name: 'qBittorrent',
     description: 'Torrent client status',
     icon: Download,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -55,7 +55,7 @@ const widgets: WidgetConfig[] = [
     name: 'Prowlarr',
     description: 'Indexer and app sync status',
     icon: Search,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -63,7 +63,7 @@ const widgets: WidgetConfig[] = [
     name: 'Jellyfin',
     description: 'Media server dashboard',
     icon: Play,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -71,7 +71,7 @@ const widgets: WidgetConfig[] = [
     name: 'Plex',
     description: 'Plex media server',
     icon: Play,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -95,7 +95,7 @@ const widgets: WidgetConfig[] = [
     name: 'ESXi VMs',
     description: 'VMware vSphere VMs',
     icon: Server,
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 4, h: 3 },
     configurable: true,
   },
   {
@@ -111,7 +111,7 @@ const widgets: WidgetConfig[] = [
     name: 'App Shortcuts',
     description: 'Grouped app launcher widget',
     icon: Grid3x3,
-    defaultSize: { w: 6, h: 3 },
+    defaultSize: { w: 5, h: 3 },
     configurable: true,
   },
   {
@@ -119,7 +119,7 @@ const widgets: WidgetConfig[] = [
     name: 'Search Widget',
     description: 'Standalone search box',
     icon: Search,
-    defaultSize: { w: 6, h: 2 },
+    defaultSize: { w: 5, h: 2 },
     configurable: true,
   },
   {
@@ -127,7 +127,7 @@ const widgets: WidgetConfig[] = [
     name: 'Quick Stats',
     description: 'Summary of key metrics',
     icon: Activity,
-    defaultSize: { w: 12, h: 1 },
+    defaultSize: { w: 6, h: 1 },
     configurable: false,
   },
 ];

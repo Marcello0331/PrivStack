@@ -29,6 +29,8 @@ declare module 'react-grid-layout' {
     [key: string]: any;
   }
 
+  export function WidthProvider<T extends React.ComponentType<any>>(component: T): T;
+
   export default class GridLayout extends React.Component<GridLayoutProps> {}
 }
 

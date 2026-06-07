@@ -41,6 +41,21 @@ function normalizeRecent(item: any) {
   };
 }
 
+async function optionalJellyfinJson<T>(
+  config: Parameters<typeof jellyfinJson>[0],
+  pathname: string,
+  fallback: T,
+  warnings: string[],
+  warning: string
+) {
+  try {
+    return await jellyfinJson<T>(config, pathname);
+  } catch {
+    warnings.push(warning);
+    return fallback;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -56,12 +71,30 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const [sessions, counts, libraries, latest] = await Promise.all([
-        jellyfinJson<any[]>(config, '/Sessions'),
-        jellyfinJson<any>(config, '/Items/Counts'),
-        jellyfinJson<any[]>(config, '/Library/VirtualFolders'),
-        jellyfinJson<any[]>(config, '/Items/Latest?Limit=12'),
+      const warnings: string[] = [];
+      const sessions = await jellyfinJson<any[]>(config, '/Sessions');
+      const [counts, libraries, users] = await Promise.all([
+        optionalJellyfinJson<any>(config, '/Items/Counts', {}, warnings, 'Item counts are unavailable.'),
+        optionalJellyfinJson<any[]>(config, '/Library/VirtualFolders', [], warnings, 'Libraries are unavailable.'),
+        optionalJellyfinJson<any[]>(config, '/Users', [], warnings, 'Users are unavailable.'),
       ]);
+
+      const userId = users.find((user) => !user.Policy?.IsDisabled)?.Id || users[0]?.Id;
+      const latest = userId
+        ? await optionalJellyfinJson<any[]>(
+            config,
+            `/Users/${encodeURIComponent(userId)}/Items/Latest?Limit=12`,
+            [],
+            warnings,
+            'Recently added items are unavailable.'
+          )
+        : await optionalJellyfinJson<any[]>(
+            config,
+            '/Items/Latest?Limit=12',
+            [],
+            warnings,
+            'Recently added items are unavailable.'
+          );
 
       const normalizedSessions = sessions.map(normalizeSession);
       const activeSessions = normalizedSessions.filter((item) => item.itemTitle).length;
@@ -76,6 +109,8 @@ export async function GET(request: NextRequest) {
         sessions: normalizedSessions,
         libraries: libraries.map(normalizeLibrary),
         recent: latest.map(normalizeRecent),
+        partialData: warnings.length > 0,
+        warnings,
       });
     } catch (error) {
       return NextResponse.json(jellyfinError(error), { status: 502 });

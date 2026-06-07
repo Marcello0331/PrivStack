@@ -12,7 +12,9 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
   const router = useRouter();
   const { data: session } = useSession();
   const [apps, setApps] = useState<AppRecord[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => (
+    typeof window !== 'undefined' ? window.localStorage.getItem('privstack:apps-collapsed') === '1' : false
+  ));
   const [editMode, setEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -24,6 +26,10 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
   }, [refreshKey]);
 
   const isAdmin = (session?.user as any)?.role === 'admin';
+
+  useEffect(() => {
+    window.localStorage.setItem('privstack:apps-collapsed', collapsed ? '1' : '0');
+  }, [collapsed]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -80,12 +86,13 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
   }, {});
 
   return (
-    <div className={`transition-all ${collapsed ? 'h-12' : 'h-auto'}`}>
-      <div className="pt-20 px-6 pb-4">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="transition-all">
+      <div className={`px-6 ${collapsed ? 'pt-20 pb-2' : 'pt-20 pb-4'}`}>
+        <div className={`${collapsed ? 'mb-0' : 'mb-3'} flex flex-wrap items-center gap-2`}>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1 rounded-lg glass-sm hover:bg-white/10 transition-all inline-flex items-center gap-1 text-sm text-gray-400"
+            className="px-2 py-1 rounded-lg glass-sm hover:bg-white/10 transition-all inline-flex items-center gap-1 text-xs text-gray-400"
+            title={collapsed ? 'Show apps' : 'Hide apps'}
           >
             {collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
             <span>Apps</span>
@@ -94,7 +101,7 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
             <>
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`p-1.5 rounded-lg transition-all inline-flex items-center gap-1 text-sm ${
+                className={`px-2 py-1 rounded-lg transition-all inline-flex items-center gap-1 text-xs ${
                   editMode ? 'bg-accent-blue text-white' : 'glass-sm text-gray-400 hover:text-white'
                 }`}
               >
@@ -103,7 +110,7 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
               </button>
               <button
                 onClick={() => router.push('/settings?tab=apps')}
-                className="p-1.5 rounded-lg glass-sm hover:bg-white/10 transition-all inline-flex items-center gap-1 text-sm text-gray-400"
+                className="px-2 py-1 rounded-lg glass-sm hover:bg-white/10 transition-all inline-flex items-center gap-1 text-xs text-gray-400"
               >
                 <Settings size={14} />
                 <span>Manage</span>
@@ -113,13 +120,13 @@ export default function AppLauncherBar({ refreshKey = 0 }: { refreshKey?: number
         </div>
 
         {!collapsed && (
-          <div className="space-y-5">
+          <div className="space-y-3">
             {error && <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm">{error}</div>}
 
             {Object.entries(groupedApps).map(([category, items]) => (
               <section key={category}>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{category}</h2>
-                <div className="flex flex-wrap gap-3 items-start">
+                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">{category}</h2>
+                <div className="flex flex-wrap gap-2 items-start">
                   {items.map((app) => (
                     <AppTile key={app.id} app={app} editMode={editMode} onUpdate={fetchApps} />
                   ))}
