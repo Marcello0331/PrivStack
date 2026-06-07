@@ -1,5 +1,10 @@
 import Docker from 'dockerode';
 
+export interface DockerConnectionInfo {
+  mode: 'host' | 'socket';
+  target: string;
+}
+
 export interface DockerContainerSummary {
   id: string;
   fullId: string;
@@ -13,8 +18,31 @@ export interface DockerContainerSummary {
   labels: Record<string, string>;
 }
 
+export function getDockerConnectionInfo(): DockerConnectionInfo {
+  const dockerHost = process.env.DOCKER_HOST;
+  if (dockerHost) {
+    return { mode: 'host', target: dockerHost };
+  }
+
+  return {
+    mode: 'socket',
+    target: process.env.DOCKER_SOCKET_PATH || '/var/run/docker.sock',
+  };
+}
+
 export function getDockerClient() {
-  return new Docker({ socketPath: process.env.DOCKER_SOCKET_PATH || '/var/run/docker.sock' });
+  const connection = getDockerConnectionInfo();
+
+  if (connection.mode === 'host') {
+    const url = new URL(connection.target);
+    return new Docker({
+      protocol: url.protocol.replace(':', '') as 'http' | 'https',
+      host: url.hostname,
+      port: url.port ? Number(url.port) : url.protocol === 'https:' ? 443 : 80,
+    });
+  }
+
+  return new Docker({ socketPath: connection.target });
 }
 
 export function dockerErrorCode(error: unknown) {
@@ -29,16 +57,30 @@ export function dockerErrorCode(error: unknown) {
 
 export function formatDockerError(error: unknown) {
   const errorCode = dockerErrorCode(error);
+  const connection = getDockerConnectionInfo();
   const messages: Record<string, string> = {
     container_not_found: 'Container not found.',
     docker_unavailable: 'Docker daemon is unavailable.',
     permission_denied: 'PrivStack cannot access the Docker socket.',
     socket_missing: 'Docker socket is not mounted.',
   };
+  const hints: Record<string, string> = {
+    container_not_found: 'Refresh the widget and try the action again.',
+    docker_unavailable: connection.mode === 'host'
+      ? 'Check that the Docker socket proxy container is running and reachable from PrivStack.'
+      : 'Check that Docker is running and the socket path is correct.',
+    permission_denied: connection.mode === 'host'
+      ? 'Check the Docker socket proxy permissions and mounted host socket.'
+      : 'Use the Docker socket proxy deployment or grant the container access to the host Docker group.',
+    socket_missing: 'Mount /var/run/docker.sock into the Docker socket proxy service.',
+  };
 
   return {
     error: errorCode,
     message: messages[errorCode],
+    hint: hints[errorCode],
+    dockerAccess: connection.mode,
+    dockerTarget: connection.target,
   };
 }
 

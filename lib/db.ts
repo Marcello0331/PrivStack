@@ -121,7 +121,12 @@ function initializeSchema() {
     const insertStmt = database.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
     insertStmt.run('setup_complete', '0');
     insertStmt.run('search_engine', 'google');
-    insertStmt.run('accent_color', '#3b82f6');
+    insertStmt.run('accent_color', '#ef6b63');
+    insertStmt.run('background_type', 'preset');
+    insertStmt.run('background_value', 'homarr');
+    insertStmt.run('glass_opacity', '0.16');
+    insertStmt.run('glass_blur', '10');
+    insertStmt.run('particles_enabled', '0');
   }
 }
 

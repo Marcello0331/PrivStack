@@ -233,7 +233,7 @@ export default function SettingsPage() {
                 />
                 <ServiceInput
                   label="Accent Color"
-                  value={settings['accent_color'] || '#3b82f6'}
+                  value={settings['accent_color'] || '#ef6b63'}
                   onChange={(val) => setSettings({ ...settings, accent_color: val })}
                   type="color"
                 />
@@ -256,9 +256,10 @@ export default function SettingsPage() {
                 {(settings['background_type'] || 'preset') === 'preset' && (
                   <SelectInput
                     label="Preset"
-                    value={settings['background_value'] || 'aurora'}
+                    value={settings['background_value'] || 'homarr'}
                     onChange={(val) => setSettings({ ...settings, background_value: val })}
                     options={[
+                      ['homarr', 'Homarr Dark'],
                       ['aurora', 'Aurora'],
                       ['ember', 'Ember'],
                       ['forest', 'Forest'],
@@ -336,7 +337,7 @@ export default function SettingsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <RangeInput
                   label="Glass Opacity"
-                  value={settings['glass_opacity'] || '0.05'}
+                  value={settings['glass_opacity'] || '0.16'}
                   min="0"
                   max="0.4"
                   step="0.01"
@@ -344,7 +345,7 @@ export default function SettingsPage() {
                 />
                 <RangeInput
                   label="Glass Blur"
-                  value={settings['glass_blur'] || '12'}
+                  value={settings['glass_blur'] || '10'}
                   min="0"
                   max="30"
                   step="1"
@@ -352,7 +353,7 @@ export default function SettingsPage() {
                 />
                 <SelectInput
                   label="Particles"
-                  value={settings['particles_enabled'] || 'true'}
+                  value={settings['particles_enabled'] || 'false'}
                   onChange={(val) => setSettings({ ...settings, particles_enabled: val })}
                   options={[
                     ['true', 'Enabled'],

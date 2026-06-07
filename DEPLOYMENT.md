@@ -104,17 +104,24 @@ docker compose restart
 
 ### Docker Socket Widget
 
-The Docker Containers widget reads the local Docker socket to list containers,
-show uptime and logs, and run start, stop, and restart actions. The provided
-Compose file mounts `/var/run/docker.sock` and sets
-`DOCKER_SOCKET_PATH=/var/run/docker.sock`.
+The Docker Containers widget reads Docker through the `docker-socket-proxy`
+sidecar to list containers, show uptime and logs, and run start, stop, and
+restart actions. The provided Compose file mounts `/var/run/docker.sock` only
+into the proxy and sets `DOCKER_HOST=http://docker-socket-proxy:2375` for
+PrivStack.
 
-On Linux, if the widget reports a Docker socket permission error, set the host
-Docker group ID before starting the stack:
+You no longer need to export the host Docker group ID. If the widget reports
+that Docker is unavailable, check that the `privstack-docker-proxy` container is
+running and can access `/var/run/docker.sock`.
 
-```bash
-export DOCKER_GID=$(getent group docker | cut -d: -f3)
-docker compose up -d
+Docker app discovery is available under **Settings > Apps > Discover Docker**.
+Labels provide the best results:
+
+```yaml
+labels:
+  privstack.name: "qBittorrent"
+  privstack.url: "http://192.168.0.131:8080"
+  privstack.category: "Downloads"
 ```
 
 ## Integrating with Portainer

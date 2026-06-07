@@ -152,27 +152,36 @@ Adding a new widget is as simple as creating these three files.
 The included `docker-compose.yml` provides:
 
 - Multi-stage build for minimal image size
-- Volume mounts for data persistence, uploaded backgrounds, and Docker socket access
+- Volume mounts for data persistence and uploaded backgrounds
+- Restricted Docker socket proxy for Docker widgets and discovery
 - Health checks
 - Automatic restart on failure
 - Bridge network for service isolation
 
 ### Docker Widget Access
 
-The Docker Containers widget needs access to the host Docker socket. The provided Compose file mounts:
+The Docker Containers widget and Docker app discovery use a restricted
+`docker-socket-proxy` sidecar by default. PrivStack talks to:
+
+```env
+DOCKER_HOST=http://docker-socket-proxy:2375
+```
+
+The host Docker socket is mounted only into the proxy container. You no longer
+need to export `DOCKER_GID` before deployment.
+
+To improve Docker auto-discovery, add labels to your containers:
 
 ```yaml
-- /var/run/docker.sock:/var/run/docker.sock
+labels:
+  privstack.name: "Sonarr"
+  privstack.url: "http://192.168.0.131:8989"
+  privstack.icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/sonarr.png"
+  privstack.category: "Media"
 ```
 
-On Linux, export the host Docker group ID before rebuilding:
-
-```bash
-export DOCKER_GID=$(getent group docker | cut -d: -f3)
-docker compose up -d --build
-```
-
-Without the correct group access, the widget may show a socket permission error.
+Homepage, Homarr, and Traefik labels are also detected. Published ports are used
+as a fallback.
 
 ### Environment Variables
 
@@ -184,6 +193,8 @@ NEXTAUTH_URL             # Dashboard URL accessible from browser
 DATABASE_PATH            # SQLite database location (default: /data/privstack.db)
 TZ                       # Timezone (default: Europe/Budapest)
 DOCKER_SOCKET_PATH       # Docker socket path (default: /var/run/docker.sock)
+DOCKER_HOST              # Docker API/proxy URL (default in Compose: docker-socket-proxy)
+DOCKER_DISCOVERY_HOST    # Optional hostname for published-port discovery URLs
 GLANCES_URL              # Optional: override Glances API URL
 SONARR_URL              # Optional: override Sonarr URL
 PROWLARR_URL             # Optional: override Prowlarr URL

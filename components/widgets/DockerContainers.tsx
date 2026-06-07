@@ -16,6 +16,14 @@ interface DockerContainer {
   ports: string[];
 }
 
+interface DockerErrorState {
+  error: string;
+  message?: string;
+  hint?: string;
+  dockerAccess?: string;
+  dockerTarget?: string;
+}
+
 const STATE_STYLES: Record<string, string> = {
   running: 'bg-green-500/20 text-green-400',
   exited: 'bg-red-500/20 text-red-400',
@@ -38,7 +46,7 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
   const [containers, setContainers] = useState<DockerContainer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<DockerErrorState | null>(null);
   const [logsContainer, setLogsContainer] = useState<DockerContainer | null>(null);
   const [logs, setLogs] = useState('');
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -48,7 +56,7 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
 
   const fetchContainers = async (isManual = false) => {
     if (isManual) setRefreshing(true);
-    setError('');
+    setError(null);
 
     try {
       const response = await fetch('/api/widgets/docker');
@@ -56,14 +64,20 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
 
       if (!response.ok || data.error) {
         setContainers([]);
-        setError(data.error || 'docker_unavailable');
+        setError({
+          error: data.error || 'docker_unavailable',
+          message: data.message,
+          hint: data.hint,
+          dockerAccess: data.dockerAccess,
+          dockerTarget: data.dockerTarget,
+        });
         return;
       }
 
       setContainers(data.containers || []);
     } catch {
       setContainers([]);
-      setError('docker_unavailable');
+      setError({ error: 'docker_unavailable' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -104,7 +118,7 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
     }
 
     setActionId(`${container.fullId}:${action}`);
-    setError('');
+    setError(null);
 
     try {
       const response = await fetch(`/api/widgets/docker/${encodeURIComponent(container.fullId)}/action`, {
@@ -115,13 +129,19 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'docker_unavailable');
+        setError({
+          error: data.error || 'docker_unavailable',
+          message: data.message,
+          hint: data.hint,
+          dockerAccess: data.dockerAccess,
+          dockerTarget: data.dockerTarget,
+        });
         return;
       }
 
       await fetchContainers();
     } catch {
-      setError('docker_unavailable');
+      setError({ error: 'docker_unavailable' });
     } finally {
       setActionId('');
     }
@@ -130,21 +150,12 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
   if (loading) return <div className="text-gray-400 text-sm">Loading...</div>;
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-2 text-sm">
       <div className="flex items-center justify-between gap-2">
-        <div className="grid grid-cols-3 gap-2 flex-1">
-          <div className="glass-sm p-2 rounded-lg text-center">
-            <div className="text-lg font-bold text-green-400">{summary.running}</div>
-            <div className="text-[11px] text-gray-400">Running</div>
-          </div>
-          <div className="glass-sm p-2 rounded-lg text-center">
-            <div className="text-lg font-bold text-red-400">{summary.stopped}</div>
-            <div className="text-[11px] text-gray-400">Stopped</div>
-          </div>
-          <div className="glass-sm p-2 rounded-lg text-center">
-            <div className="text-lg font-bold text-gray-300">{summary.other}</div>
-            <div className="text-[11px] text-gray-400">Other</div>
-          </div>
+        <div className="flex flex-wrap gap-1.5 flex-1 text-[11px]">
+          <SummaryPill label="Running" value={summary.running} tone="text-green-300" />
+          <SummaryPill label="Stopped" value={summary.stopped} tone="text-red-300" />
+          <SummaryPill label="Other" value={summary.other} tone="text-gray-300" />
         </div>
         <button
           onClick={() => fetchContainers(true)}
@@ -156,44 +167,61 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
         </button>
       </div>
 
-      {error && <div className="text-xs text-red-400">{errorText(error)}</div>}
+      {error && (
+        <div className="rounded-lg border border-red-500/25 bg-red-500/10 p-2 text-xs text-red-100 space-y-1">
+          <p className="font-medium">{error.message || errorText(error.error)}</p>
+          {error.hint && <p className="text-red-100/80">{error.hint}</p>}
+          {error.dockerTarget && (
+            <p className="text-red-100/60">
+              {error.dockerAccess === 'host' ? 'Docker host' : 'Socket'}: {error.dockerTarget}
+            </p>
+          )}
+        </div>
+      )}
 
-      <div className="max-h-72 overflow-y-auto space-y-2">
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-white/10">
         {containers.length === 0 && !error && (
           <div className="glass-sm p-3 rounded-lg text-xs text-gray-400">No containers found.</div>
+        )}
+
+        {containers.length > 0 && (
+          <div className="grid grid-cols-[1.5fr_88px_72px_92px] gap-2 px-2 py-1.5 text-[11px] uppercase tracking-wide text-gray-500 bg-white/5 sticky top-0 z-10">
+            <span>Name</span>
+            <span>State</span>
+            <span>Ports</span>
+            <span className="text-right">Actions</span>
+          </div>
         )}
 
         {containers.map((container) => {
           const isRunning = container.state === 'running';
 
           return (
-            <div key={container.fullId} className="glass-sm p-2 rounded-lg text-xs space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium truncate">{container.name}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] ${STATE_STYLES[container.state] || 'bg-gray-500/20 text-gray-300'}`}>
-                      {container.state}
-                    </span>
-                  </div>
-                  <p className="text-gray-400 truncate">{container.image}</p>
-                </div>
+            <div key={container.fullId} className="grid grid-cols-[1.5fr_88px_72px_92px] gap-2 px-2 py-2 text-xs border-t border-white/10 items-center">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{container.name}</p>
+                <p className="text-gray-500 truncate">{container.image}</p>
+              </div>
+              <div className="min-w-0">
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${STATE_STYLES[container.state] || 'bg-gray-500/20 text-gray-300'}`}>
+                  {container.state}
+                </span>
+                <p className="text-gray-500 truncate mt-1">{container.uptime}</p>
+              </div>
+              <div className="text-gray-400 truncate" title={container.ports.join(', ')}>
+                {container.ports.length || '--'}
+              </div>
+
+              <div className="flex justify-end gap-1">
                 <button
                   onClick={() => openLogs(container)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-300"
+                  className="p-1.5 rounded-md hover:bg-white/10 text-gray-300"
                   title="View logs"
                 >
-                  <FileText size={14} />
+                  <FileText size={13} />
                 </button>
-              </div>
-
-              <div className="text-gray-400">
-                <p className="truncate">{container.uptime}</p>
-                {container.ports.length > 0 && <p className="truncate">{container.ports.join(', ')}</p>}
-              </div>
-
-              {isAdmin && (
-                <div className="flex gap-1.5">
+                {isAdmin && (
+                  <>
                   <ActionButton
                     title="Start"
                     loading={actionId === `${container.fullId}:start`}
@@ -218,8 +246,9 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
                   >
                     <RotateCw size={13} />
                   </ActionButton>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
@@ -247,6 +276,15 @@ export default function DockerContainersWidget({ config }: { config?: Record<str
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SummaryPill({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="glass-sm px-2 py-1 rounded-md">
+      <span className={tone}>{value}</span>
+      <span className="ml-1 text-gray-400">{label}</span>
     </div>
   );
 }

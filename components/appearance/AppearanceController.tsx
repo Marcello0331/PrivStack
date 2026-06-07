@@ -6,7 +6,8 @@ type AppearanceSettings = Record<string, string>;
 
 const BACKGROUND_PRESETS: Record<string, string> = {
   none: 'none',
-  aurora: 'radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 34%), radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.24), transparent 30%)',
+  aurora: 'linear-gradient(135deg, #111111, #202020)',
+  homarr: 'linear-gradient(135deg, #111111, #202020)',
   ember: 'radial-gradient(circle at top left, rgba(239, 68, 68, 0.22), transparent 32%), radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.22), transparent 34%)',
   forest: 'radial-gradient(circle at top left, rgba(34, 197, 94, 0.22), transparent 32%), radial-gradient(circle at bottom right, rgba(20, 184, 166, 0.22), transparent 34%)',
   mono: 'linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(31, 41, 55, 0.35))',
@@ -34,11 +35,11 @@ function hexToRgb(hex: string) {
 
 function applyAppearance(settings: AppearanceSettings) {
   const theme = settings.theme_mode === 'light' ? 'light' : 'dark';
-  const accent = /^#[0-9a-f]{6}$/i.test(settings.accent_color || '') ? settings.accent_color : '#3b82f6';
-  const glassOpacity = clampNumber(settings.glass_opacity, 0.05, 0, 0.4);
-  const glassBlur = clampNumber(settings.glass_blur, 12, 0, 30);
+  const accent = /^#[0-9a-f]{6}$/i.test(settings.accent_color || '') ? settings.accent_color : '#ef6b63';
+  const glassOpacity = clampNumber(settings.glass_opacity, 0.16, 0, 0.4);
+  const glassBlur = clampNumber(settings.glass_blur, 10, 0, 30);
   const backgroundType = settings.background_type || 'preset';
-  const backgroundValue = settings.background_value || 'aurora';
+  const backgroundValue = settings.background_value || 'homarr';
   const body = document.body;
 
   document.documentElement.dataset.theme = theme;
@@ -47,12 +48,12 @@ function applyAppearance(settings: AppearanceSettings) {
   body.style.setProperty('--glass-opacity', String(glassOpacity));
   body.style.setProperty('--glass-sm-opacity', String(Math.max(glassOpacity - 0.02, 0)));
   body.style.setProperty('--glass-blur', `${glassBlur}px`);
-  body.style.setProperty('--dashboard-bg', theme === 'light' ? '#f4f7fb' : '#0a0a0f');
+  body.style.setProperty('--dashboard-bg', theme === 'light' ? '#f4f7fb' : '#111111');
   body.style.setProperty('--dashboard-fg', theme === 'light' ? '#111827' : '#ffffff');
   body.style.setProperty('--dashboard-muted', theme === 'light' ? '#4b5563' : '#9ca3af');
 
   if (backgroundType === 'image' && backgroundValue) {
-    body.style.setProperty('--dashboard-bg-layer', `linear-gradient(rgba(10, 10, 15, 0.45), rgba(10, 10, 15, 0.45)), url("${backgroundValue}")`);
+    body.style.setProperty('--dashboard-bg-layer', `linear-gradient(rgba(10, 10, 10, 0.32), rgba(10, 10, 10, 0.58)), url("${backgroundValue}")`);
   } else if (backgroundType === 'custom' && backgroundValue) {
     body.style.setProperty('--dashboard-bg-layer', backgroundValue);
   } else {

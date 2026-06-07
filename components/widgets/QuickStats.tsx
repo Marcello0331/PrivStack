@@ -26,16 +26,22 @@ export default function QuickStatsWidget({ config }: { config?: Record<string, a
 
   if (loading || !stats) return null;
 
+  const displayValue = (value: unknown) => (
+    value === null || value === undefined ? '--' : String(value)
+  );
+
   const items = [
     ['Uptime', stats?.uptime || 'N/A'],
-    ['Containers', stats?.containers || 0],
-    ['Torrents', stats?.torrents || 0],
-    ['Sonarr', stats?.sonarrQueue || 0],
-    ['Radarr', stats?.radarrQueue || 0],
+    ['Containers', displayValue(stats?.containers)],
+    ['Running', displayValue(stats?.runningContainers)],
+    ['Torrents', displayValue(stats?.torrents)],
+    ['Active', displayValue(stats?.activeTorrents)],
+    ['Sonarr', displayValue(stats?.sonarrQueue)],
+    ['Radarr', displayValue(stats?.radarrQueue)],
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-none">
+    <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-none" title={(stats?.warnings || []).join(', ')}>
       {items.map(([label, value]) => (
         <div key={label} className="glass-sm px-2 py-1 rounded-md whitespace-nowrap">
           <span className="text-gray-400">{label}</span>

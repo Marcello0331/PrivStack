@@ -55,12 +55,12 @@ export default function Header({
   };
 
   return (
-    <header className="glass fixed top-0 left-0 right-0 z-50 border-b">
-      <div className="px-6 py-4 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#242424]/95 backdrop-blur-md">
+      <div className="px-5 py-2.5 flex items-center justify-between">
         {/* Left: Logo + Hostname + Clock */}
-        <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-bold gradient-text">PrivStack</h1>
-          <div className="hidden lg:flex items-center gap-4 text-sm text-gray-400">
+        <div className="flex items-center gap-5">
+          <h1 className="text-2xl font-bold text-white">PrivStack</h1>
+          <div className="hidden lg:flex items-center gap-4 text-xs text-gray-400">
             <span>192.168.0.131</span>
             <div className="flex items-center gap-1">
               <Clock size={16} />
@@ -70,9 +70,9 @@ export default function Header({
         </div>
 
         {/* Center: Search Bar */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-md mx-8">
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-8">
           <div
-            className={`glass-sm px-4 py-2 flex items-center gap-2 transition-all ${
+            className={`rounded-full bg-white/5 border border-white/10 px-4 py-2 flex items-center gap-2 transition-all ${
               searchFocused ? 'ring-2 ring-accent-blue' : ''
             }`}
           >
@@ -89,13 +89,13 @@ export default function Header({
         </form>
 
         {/* Right: Edit Toggle + Settings + User Menu */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => {
               setShowActionsMenu(false);
               onToggleEditMode();
             }}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all glass-hover ${
+            className={`p-2 rounded-lg text-sm font-medium transition-all hover:bg-white/10 ${
               editMode ? 'ring-2 ring-accent-blue text-accent-blue' : ''
             }`}
             title="Toggle edit mode"
@@ -107,7 +107,7 @@ export default function Header({
             <div className="relative">
               <button
                 onClick={() => setShowActionsMenu(!showActionsMenu)}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-all glass-hover flex items-center gap-2"
+                className="p-2 rounded-lg text-sm font-medium transition-all hover:bg-white/10 flex items-center gap-2"
                 title="Add to dashboard"
               >
                 <Plus size={16} />
@@ -145,7 +145,7 @@ export default function Header({
 
           <button
             onClick={() => router.push('/settings')}
-            className="p-2 rounded-lg transition-all glass-hover"
+            className="p-2 rounded-lg transition-all hover:bg-white/10"
             title="Settings"
           >
             <Settings size={20} />
@@ -154,7 +154,7 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-8 h-8 rounded-full glass-sm flex items-center justify-center text-sm font-bold"
+              className="w-9 h-9 rounded-full bg-purple-500/30 border border-white/10 flex items-center justify-center text-sm font-bold"
             >
               {session?.user?.name?.[0]?.toUpperCase() || 'A'}
             </button>
